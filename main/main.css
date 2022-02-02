@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond&display=swap');
+
+br {
+   display: block;
+   margin: 10px 0;
+}
+
+.content {
+    margin: auto;
+    /*width: 40em;*/
+    max-width: 40em;
+    font-family: 'EB Garamond', serif;
+    font-size: 1.12em;
+    line-height: 1.12em;
+    text-align: justify;
+}
+
+.katex {
+    font-size: 1em;
+}
+
+a.tooltip:hover {
+    /*background:#ffffff;*/
+}
+a.tooltip:visited{
+    color: blue;
+}
+/*BG color is a must for IE6*/
+
+a.tooltip span {
+    display:none;
+    position:absolute;
+    padding:5px 5px;
+    margin-top: 1.5em;
+    font-size: 0.9em;
+    width: 19em;
+    border:1px solid #cccccc;
+    z-index: 1;
+    background: #ffc;
+    color: #000;
+                 
+}
+
+a.tooltip:hover span{
+    display:inline;
+}
+
+ul.toc {
+    list-style-type:none;
+}
+
+@media only screen and (max-width: 40em) {
+  .content {
+      margin: 0;
+      width: 96vw;
+  }
+  ul {
+      padding: 5px; /* To remove default left padding */
+  }
+  
+}

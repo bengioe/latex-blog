@@ -1,0 +1,524 @@
+\bibliography{journ.bib}
+
+\title{Papers, papers, things}
+
+Welcome to my loosely organized collection of papers, notes and thoughts. I made this public, but use it with discretion, some of the summaries may be from me glancing at the abstract for 17.4 seconds.
+
+\donumbersections
+\tableofcontents
+
+\section{Reinforcement Learning}
+
+
+\subsection{Generalization in Deep RL}
+\begin{itemize}
+    \item \citet{sutton1996generalization}, an early success of TD$(\lambda)$ with linear+sparse tile coding.
+    \item \citet{whiteson2011protecting}, seems it's been known for a while that we're doing RL evaluation wrong -- tries to formalize how we should train and test RL agents on distributions of environments.
+    \item \citet{machado2018revisiting}, adding stochasticity (off-policy steps) to agents can break them, but training them with the stochasticity recovers performance (a priori some form of generalization).
+    \item \citet{oh2017zero}, with embedding (of instrutions) regularizations, agents can generalize to new instruction sequences on navigation tasks.
+    \item \citet{farebrother2018generalization}, L2/dropout can help on Atari, evaluation on different levels
+    \item \citet{zhang2018study}, DRL agents can generalize on random mazes, but need lots of mazes to not overfit. Regularization and stochasticity may not help with generalization, still unclear. Similarly, \citet{cobbe2018quantifying}, even on procedurally generated environments, DRL agents can easily overfit on their training set unless regularized (or unless a large number of them are generated). \citet{justesen2018illuminating} also find that generating environments helps with generalization to similar environments.
+    \item \citet{packer2018assessing},  DRL agents have some extrapolation capabilities when trained on a distribution of environment parameters (e.g. pole mass in CartPole), but they are limited.
+    \item \citet{zhang2018dissection}, using fixed sets of random seeds for continuous state/action MDPs seems to be a good measure of generalization/overfitting. As expected more training seeds is better. Adding a model-based objective seems to hurt generalization.
+    \item \citet{witty2018measuring}, forcing the agent to start from unreachable or off-policy states breaks them, training from there is hard for the DQN algorithm.
+    \item \citet{zhao2019investigating}, "standard algorithms and architectures generalize poorly in the face of noise and environmental shift".
+    \item \citet{igl2019generalization}, noise regularization (e.g. dropout) but with noise on $V$ turned off for TD bootstrapping step and policy gradient computation, and noise on $\pi$ turned off for rollouts (less exploratory?). Also proposes IB-based AC method.
+    \item \citet{igl2020impact}, non-stationarity experiments on supervised and RL, propose to retrain actor-critic from scratch by distillation once in a while (ITER). Lesson: DNNs get "stuck" in a parameter region and even though they can adapt to non-stationarity (we know because the train reward mostly stays the same to the baseline) they do so by sacrificing "generalization power" (increased performance on the test envs)
+    \item \citet{fu2019diagnosing}, ``function approximation error is not a major problem in Q-learning algorithms, but only when the representationalcapacity of the function approximator is high'', low-divergence rate, oracle-based early stopping helps combat overfitting, non-stationarity doesn't seem to affect performance (weird), high-entropy rather than on-policy data sampling is better.
+    \item \citet{neal2019support}, on non-generalizing environments (mountain car, cartpole, acrobot), one can abritrarily increase the width without any signs of overfitting. Is this surprising though, given that the training set and test set are the same?
+    \item \citet{Song2020Observational}, agents can overfit to suprious observations (e.g. timer in games) but increasing capacity always provides implicit regularization (Overparametrization improves generalization for CoinRun).
+    \item \citet{kostrikov2020image}, it seems possible to just augment the pixel inputs by noise and random shifts and get state-of-the-art on Atari 100k with DQN (also averaging both target $Q'$ and $Q$ over multiple image transformations helps).
+    \item \citet{hilton2020understanding}, this paper has more, but one result, training on enough CoinRun levels eventually leads to interpretability (and perhaps not coincidentally to better performance on the test set levels). Perhaps all along in deep RL there was a diversity issue that made progress clunky and uninformative.
+\end{itemize}
+
+\subsection{Generalization RL theory}
+\begin{itemize}
+    \item \cite{du2019good}, there exists classes of MDPs (tree-like) where $2^H$ samples are needed, generalization seems improbable, even with "good features" (I still disagree with the conclusion of this paper but it seems to be beyond my mathematical comprehension abilities, so who knows.).
+    \item \cite{wang2019generalization}, part of the paper differentiates intrinsic from external generalization error. For some (reparameterizable) MDPs, "the objective can always be reformulated so that the policy only affects the reward instead of the underlying distribution."
+    \item \cite{bellemare2019geometric}, for $n$ states, all possible value functions form a polytope. This polytope has extrema (kind of like the vertices) and instead of learning a representation for all possible value functions, one can learn a representation for those extrema only (adversarial value functions).\\
+    fun observation:
+    $$\max_{\pi\in\mathcal{P}} \sum_{x \in \mathcal{X}}\delta(x) V^\pi(x)$$
+    yields the optimal policy regardless of $\delta$, as long as $\delta(x)\geq 0$ \cite{bertsekas2012dynamic}
+    \item \citet{dong2019expressivity}, one can build MDPs with extremely simple (and easy to learn) models that end up having very nasty Q functions. Since this is presumably the case for domains like Mujoco, they show simple planning can help at test time.
+\end{itemize}
+
+\subsection{Interference (+in RL)}
+(this quantity: $\nabla J_A^T\nabla J_B$)
+\begin{itemize}
+   \item \cite{fort2019stiffness}, interference is linked with generalization, they call it "stiffness" (positive interference), tied with learning rate (Adam), higher learning rate|training more leads to less stiffness (I really think overfitting can be characterized by how orthogonal gradients are. This is evidence.). Other observations: $x$s from same class are more stiff together, initially at least. Cross-class interference negatively linked to validation score (class confusion from model?).
+   
+    \begin{itemize}
+        \item Hessians and interference seem very related, sub-problem: \cite{fort2019emergent}, analyses bulk+outliers structure of Hessian (+different logits are quite orthogonal in many senses)/"loss surface". Empirically observed properties of Hessians can be explained with one model by making reasonable simplifying assumptions. (to revisit)
+        \item see also \cite{papyan2019measurements}.
+    \end{itemize}
+   \item \cite{riemer2018learning}, uses a Reptile-style first-order approximation of the interference to maximize it (positive interference). Multi-task perspective, but works for RL too.
+   \item \cite{liu2019toward}, arrives to same interference quantity with a different approach (Taylor expansion of what I called generalization gain!), some claims wrt to Bellman projection
+    \item \citet{achiam2019towards}, DQN, decomposes deadly triad into maths using NTK/interference trick. Proposes method to find minibatch-optimal inverse kernel, à-la Natural Gradient QL.
+    \item \citet{lopez2017gradient}, continual learning, store representative samples of past tasks, disallow destructive interference, measured as $\nabla J_A^T\nabla J_B$, if an update has destructive interference, project the gradient onto the non-destructive space (solved via quadratic programming).
+    \item \citet{nichol2018first}, (Reptile), authors remark that $\nabla_\theta(\nabla_\theta J_A^T\nabla_\theta J_B^T) = H_B\nabla J_A+H_A\nabla J_B$
+    \item \citet{jacot2018neural}, This quantity \emph{is} the neural tangent kernel!
+    \item \citet{schaul2019ray}, looks at interference between two bandits.
+    \item \citet{sankararaman2019impact}, SGD is fast when there is constructive interference; more depth = more negative interference; more width = more positive interference.
+    \item \citet{fedus2020catastrophic}, in harder games like montezuma's revenge, there's a plateau at which more training interferences with predictions at the beginning. Separating states in different contexts (proxied by the current total game score) and training on a single context, one sees an increase in loss for other contexts in Montezuma, but a decrease for most contexts in an easier game like Pong.
+    \item \citet{liu2020practical} "target network frequency is a dominating factor for interference, [.x.] updates on the last layer result in higher interference than [internal] updates"
+    \item \citet{cobbe2020phasic}, separating parameterization for $V$ and $\pi$ reduces (presumably?) interference and improves performance/generalization. More stuff is going on in that paper, to read.
+    \item \citet{mehta2020extreme}, by scaling the initial distribution of DNNs, one can still fit interpolating DNNs, but the generalization error grows. That is, by messing with initialization and activation functions, we can find DNNs that, with an otherwise identical architecture would generalize, fully memorizes its training set. This is reflected in the gradient alignment (class-wise inner product average).
+\end{itemize}
+
+\subsection{Deadly Triad}
+\begin{itemize}
+    \item \cite{hasselt2018deep}, recap of recent findings?
+    \begin{itemize}
+        \item (Deep divergence) Unbounded divergence is uncommon when combining Q-learning and conventional deep reinforcement learning function spaces
+        \item (Target networks) There is less divergence when bootstrapping on separate networks
+        \item (Overestimation) There is less divergence when correcting for overestimation bias
+        \item (Multi-step) Longer multi-step returns will diverge less easily
+        \item (Capacity) Larger, more flexible networks will diverge less easily
+        \item (prioritisation) Stronger prioritisation of updates will diverge more easily.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Regularization in RL}
+without explicitly tackling generalization:
+\begin{itemize}
+  \item \citet{nair2015massively}, Human starts on Atari improve DQN's performance.
+  \item \citet{jaderberg2016reinforcement}, training a model with auxiliary tasks improves sample effciency.
+  \item \citet{anschel2017averaged}, DQN's value function diverges, instead, create DQN target by averaging Q preds of last $K$ $\theta$s smooths and prevents divergence in Atari.
+  \item \citet{thodoroff2018temporal}, by smoothing the value function (as a function of $v(s_{t-1})$) in targets, they get better PPO-Atari performance.
+  \item \citet{lee2019simple}, by training on random conv2D transforms of the data, can train agents to be robust to unseen visual patterns (think sim2real but in texture space). Also kind of works on SL.
+  \item \citet{liu2019utility}, argue/show that sparse representations in the simple RL domains + deepRL learns much faster (consistent with 0-interference). They have distributional regularizations encourage local coactivations (0-interference for states that aren't close).
+  \item \citet{kumar2020implicit}, DNNs that bootstrap decrease their expressivity, learn low-rank features, doesn't seem fixed by resetting parameters periodically.
+    
+\end{itemize}
+
+\subsection{Multi-step returns in RL}
+\begin{itemize}
+  \item \citet{kearns2000bias}, $k$-step returns and $\lambda$ returns, proofs of convergence and explanations as to why their optimal values might be intermediary values. I.e., the best $\lambda$ is problem dependent.
+\end{itemize}
+
+\subsection{Methods}
+\begin{itemize}
+  \item \citet{chung2018twotimescale}, two timescale, train a DNN slowly (with MSTDE? or MSPBE?) then do linear stuff with the top layer.
+  \item \citet{wu2018the}, \citet{machado2017laplacian}, laplacian, I don't really know what's going on to go from graph to continuous deep learning but, Laplacian => graph distance instead of L2/other distances, makes learning more "temporal". 
+  \item \citet{hasselt2019use}, when to use parametric models? Hard, it seems replay buffer can be used more efficiently than any model.  Forward planning for behaviour, rather than credit assignment, seems more useful. Interestingly, backward planning is less harmful than forward planning (the hypothesis is that updating imaginary/wrong states with real targets is less bad the updating real states with wrong targets)
+  \item \citet{hung2019optimizing}, Temporal Value Transport, basically an intrinsic built back sending value back into time to skip distractor tasks. It's formulation is oddly reminiscent of meta-PG where the reward of the exploration phase is replaced by that of the exploitation phase \cite{gupta2018metareinforcement}.
+  \item \citet{chandak2020optimizing}, ``\emph{minimizing} performance over some of the data from past episodes can be beneficial when searching for a policy that \emph{maximizes} future performance''. Forecasting future performance and doing PG wrt to predictions of that future performance.
+\end{itemize}
+
+\subsection{Model-based}
+
+\begin{itemize}
+    \item \citet{freeman2019learning}, do policy gradient but with $model(s_{t-1})$ as an input with probability $p$, train both model and policy using the same PG loss. The model is thus trained without any forward-looking.
+    \end{itemize}
+
+\subsection{Hierarchical RL}
+\begin{itemize}
+  \item \citet{wen2020efficiency}, in MDPs with a certain structure, namely equivalence classes of subgraphs/subMDPs, one can provably have more efficient hierarchical RL, options-based planning.
+\end{itemize}
+    
+
+
+\section{Thoughts on Research}
+
+On the role of scientific thought \cite{dijkstra1974role}. Have clearly defined, albeit interlinked, ideas. One should be able to study something in depth and, perhaps most importantly. in isolation. That is not to say that because we study something in isolation it is not linked to other things, it almost always will be, but this isolation requirement is necessary. Was Dijkstra a proto-intersectional thinker? Being able to entertain parallel thoughts is valuable. Looking for these ideas should lead to ``the discovery of useful concepts''.
+
+It's important for ideas to have a ``general acceptance'', it's important for ideas that we in isolation think are useful to be useful to others as well. For that they need to hear and understand them. But, it's important to be able to ignore this once in a while, otherwise we may be stuck not trying anything.
+
+The bus ticket theory of genius \cite{graham2019busticket} basically says that geniuses emerge out of being obsessed with something for its own sake rather than out of a desire of impact. That being said, Graham argues we might be able to align what we are obsessed about with impactful things with some rules of thumbs.
+
+\section{DNN Theory}
+
+
+
+\subsection{Generalization in Deep SL}
+\begin{itemize}
+    \item \citet{hardt2016train}, SGD is stability inducing even in non-convex lipshitz DNNs.
+    \item \citet{zhang2016understanding}, architectures that generalize can also be trained to memorize
+    \item \citet{keskar2016large}, large batches generalize less well
+    \item \citet{arpit2017closer}, DNNs seem to learn simpler patterns first, relationship to adv. examples.
+    \item \citet{raghu2017svcca}, DNNs learn from bottom up, in fact you can freeze layers, bottom up, during training.
+    \item \citet{morcos2018importance}, models that generalize well are more robust to feature ablation
+    \item \citet{morcos2018insights}, "networks which generalize converge to more similar representations than networks which memorize, wider networks converge to more similar solutions than narrow networks, trained networks with identical topology but different learning rates converge to distinct clusters with diverse representations."
+    \item \citet{zhu2018anisotropic}, SGD creates an anisotropic noise, and our theories cannot treat it as isotropic or they will miss something. There also seems to be some relation between that noise and the curvature of the loss surface where the flatness of SGD is linked to $Tr(H \Sigma)$ with $\Sigma$ the covariance of the gradient.
+    \item \citet{belkin2018reconciling}, original double descent paper
+    \item \citet{zhang2019layers}, supports that early layers learn earlier, resetting them often causes high loss in performance, less true of latter layers (cls).
+    \item \citet{lee2020neural}, proposes to (meta-)learn a complexity measure with neural networks. Since this measure is differentiable, it can be used as a regularization term in regular training. The description of a model $h$ is (roughly) its output on a set of training and test inputs (plus said inputs).
+    \item \citet{swayamdipta2020dataset}, (NLP) it seems datasets can be consistently decomposed into easy, ambiguous, and hard examples. This is examplified by the variance of each example's true-class predictions across training. Training (more?) on ambiguous examples has an impact on out-of-distribution (OoD) performance.
+    \item \citet{bordelon2020spectrum} ``as the size of the training set grows, kernel machines and neural networks fit successively higher spectral modes of the target function''
+\end{itemize}
+
+\subsection{Learning dynamics}
+\begin{itemize}
+  \item \citet{sagun2017empirical}, spectrum of final Hessian, bulk near 0 + a few positive outliers (almost exactly the number of classes), remains unchanged by capacity, large batch produces larger eigenvalues, the trailing negative eigenvalues are extremely small. SGD and GD probably fall into roughly the same basin.
+  \item \citet{smith2017dont}, decreasing the learning rate and increasing batch size are equivalent (ImageNet ResNet-50), but increased batch size is faster because of parallelism.
+  \item \citet{draxler2018essentially} \& \citet{garipov2018LossSM}, DNN solutions are almost easily connected by a low-loss low-error path in parameter space.
+  \item \citet{rahaman2018spectral}, DNNs learn low-frequency patterns first.
+  \item \citet{feng2020neural}, "there is an inverse relation between weight variance and flatness", which is "created" by SGD. Analyses this with mixture of minibatch loss surfaces. I'm confused what "variance" is being talked about though, I feel like they consider the dynamics variance (total variance of a parameter during $N$ epochs).
+  \item \citet{gur2018gradient}, "[gradients] dynamically converge to a very small subspace after a short period of training, [..] spanned by a few top eigenvectors of the Hessian (equal to the number of classes in the dataset)"
+  \item \citet{frankle2018lottery}, there exists subnetworks (binary masks) that when retrained from the same initial parameters perform as well or better than the original network (compatible with \citet{gur2018gradient}). If the network is too complicated, instead of retraining from 0, retrain from some earlier epoch \citep{frankle2019lottery}. Further work shows that DNNs on vision start by being "unstable" (i.e. two copies trained on different data do not initially have low-error linear parameter interpolations, "Linear Mode Connectivity") and then become stable. This explains why a few epochs are needed before a lottery ticket can be identified in more complicated tasks \citep{frankle2019linear}.
+  \item \citet{sagawa2020investigation}, look at when overparameterization hurts by capturing spurious correlations, it can be somewhat corrected by oversampling the right parts of the data.
+  \item \textbf{[double descent]}
+  \item \citet{nakkiran2019deep}, double descent happens in model size but also in epochs
+  \end{itemize}
+
+\subsection{Self-Supervised Learning}
+\begin{itemize}
+  \item \citet{tian2020understanding}, looking at the gradient updates of SSL, they show that gradients are stable for features that survive some covariance operator, and that this is balanced for positive and negative pairs somehow (not sure I understand)
+\end{itemize}
+
+
+\subsection{Meta Learning + Continual Learning}
+\begin{itemize}
+  \item \citet{finn2017metalearning}, claims that MAML (or parameter-tuning algorithms) generalizes better than RNN-style meta-learners (since they can adapt to any new learning task).
+  \item \citet{he2019task}, use the recent inputs to determine context, but via a meta-learning procedure.
+  \item \citet{Yin2020Meta-Learning}, maximize mutual information between prediction and the task information as to not learn one set of parameters that solve all the tasks (force adaptaiton). This can be done as MI on either the weights or the activations, weights seem to work a bit better.
+  \item \citet{javed2020learning}, have binary features, compute running average and variance of the feature $\to y$ weights to know which features are spurious correlations. To learn the features they propose a random search method but we can probably do better.
+  \item \citet{hadsell2020embracing}, a review of continual learning
+  \item \citet{gupta2020maml}, meta-learn per-parameter learning rates, increase the learning rate for constructive interference, decrease it for destructive interference.
+\end{itemize}
+
+\subsection{The nature of deep nets}
+\begin{itemize}
+  \item \citet{hanin2019complexity} \& \citet{hanin2019deep}, the expected number of linear regions in deep nets is $O(N_h^d),\;N_h=n_{h,1}+n_{h,2}+..$,  suprising given the upper bound is at least $O(n_h^{N_l})$. Seems to remain roughly constant during training
+\end{itemize}
+
+\section{DNN architectures}
+
+  
+\begin{itemize}
+  \item \citet{lamb2020neural}, iterative attention architecture, soft-top-k attends over past iterations of layers, claims to make modules specialized.
+\end{itemize}
+
+\section{RL Theory}
+
+\citet{sutton1988learning} (re)introduces TD learning to the world, interesting observation for me, is that online TD($\lambda$) can be understood as a discounted sum of gradients, but of current parameters.
+
+\begin{itemize}
+  \item \citet{bertsekas1996temporal}, TD($\lambda$) can be interpreted as doing approximate policy evaluation by doing $M$ Bellman projections (bootstrap) where $M$ is geometrically distributed with parameter $\lambda$.
+\item \citet{baxter2001infinite}: "The technique  is called the score function or likelihood ratio method and appears to have been first proposed in the sixties (Aleksandrov, Sysoyev, & Shemeneva, 1968; Rubinstein, 1969) for computing performance gradients in i.i.d. (independently and identically distributed) processes."
+  \item \citet{mahmood2015emphatic}, emphatic TD, which is about methods of updating states with some preference (interest) in mind that weighs parameter updates. For example, one can reweight off-policy data into on-policy data. It seems you can compute these ephatic weights recursively, a bit like value functions.  
+  \item \citet{yu2015convergence}, emphatic TD($\lambda$) convergence.
+\end{itemize}
+
+
+\section{Imitation Learning}
+
+\begin{itemize}
+  \item \citet{barde2020adversarial}, learn to imitate expert trajectories in Adversarial IL setting, but with an alternate generator formulation which doesn't require an RL inner loop.
+\end{itemize}
+
+\section{Staleness-corrected momentum -- related work}
+\textbf{On momentum, traces, and gradient acceleration in TD} $\;\;$ 
+
+From an RL perspective, our work has some similarity to the so-called eligibility traces mechanism. In particular, in the True Online TD($\lambda$) method of \citet{vanseijen2014true}, the authors derive a \emph{strict-online} update (i.e. weights are updated at every MDP step, using only information from past steps, rather than future information as in the $\lambda$-return perspective) where the main mechanism of the derivation lies in finding an update by assuming (at least analytically) that one can ``start over'' and reuse all past data iteratively at each step of training, and then from this analytical assumption derive a recursive update (that doesn't require iterating through all past data). The extra values that have to be kept to compute the recursive updates are then called traces. This is akin to how we conceptualize $\mu^*$, and derive $\hat \mu$.
+
+
+The conceptual similarities of the work of \citet{vanseijen2015deeper} with our work are also interesting. There, the authors analyse what ``retraining from scratch'' means (i.e., again, iteratively restarting from $\theta_0 \in \mathbb{R}^m$) but with some ideal target $\theta^*$ (e.g. the current parameters) by redoing sequentially all the TD(0) updates using $\theta^*$ for all the $n$ transitions in a replay buffer, costing $O(nm)$. They derive an online update showing that one can continually learn at a cost of $O(m^2)$ rather than paying $O(nm)$ at each step. The proposed update is also reminiscent of our method in that it aims to perform an approximate batch update without computing the entire batch gradient, and also maintains extra momentum-like vectors and matrices. We note that the derivation there only works in the linear TD case. 
+
+In a way, such an insight can be found in the original presentation of TD($\lambda$) of \citet{sutton1988learning}, where the TD($\lambda$) parameter update is written as (equation (4) in the original paper, but with adapted notation):
+$$\Delta\theta_t = \alpha [r_t + \gamma V_{\theta_t}(s_{t+1}) - V_{\theta_t}(s_t)] \sum_{k=1}^t \lambda^{t-k} \nabla_{\theta_t} V_{\theta_t}(s_k)$$
+Remark the use of $\theta_t$ in the sum; in the linear case since $\nabla_{\theta_t} V_{\theta_t}(s_k) = \phi(s_k)$, the sum does not depend on $\theta_t$ and thus can be computed recursively. A posteriori, if one can find a way to cheaply compute $\nabla_{\theta_t} V_{\theta_t}(s_k)\;\forall k$, perhaps using the method we propose, it may be an interesting way to perform TD($\lambda$) using a non-linear function approximator.
+    
+Our analysis is also conceptually related to the work of \citet{schapire1996worst}, where a worst-case analysis of TD$^*$($\lambda$) is performed using a \emph{best-case learner} as the performance upper bound. This is similar to our \emph{momentum oracle}; just as the momentum oracle is the "optimal" approximation of the accumulation gradients coming from all past training examples, the best-case learner of \citet{schapire1996worst} is the set parameters that is optimal when one is allowed to look at all past training examples (in contrast to an online TD learner).
+
+Before moving on from TD($\lambda$), let us remark that eligibility traces and momentum, while similar, estimate different quantities. The usual (non-replacing) traces estimate the exponential moving average of the gradient of $V_\theta$, while momentum does so for the objective $J$ (itself a function of $V_\theta$):
+$$\mathbf{e}_t = (1-\lambda)\sum_{k}^t \lambda^{t-k} \nabla_\theta V_\theta, \;\;\;\; \mu_t = (1-\beta)\sum_{k}^t \beta^{t-k} \nabla_\theta J(V_\theta)$$
+
+Our method also has similarities with residual gradient methods \citep{baird1995residual}. A recent example of this is the work of \citet{zhang2019deep}, who adapt the residual gradient for deep neural networks. Residual methods learn by taking the gradient of the TD loss with respect to both the current value and the next state value $V(S')$, but this comes at the cost of requiring two independent samples of $S'$ (except in deterministic environments). 
+
+Similarly, our work is related to the ``Gradient TD'' family of methods \citep{sutton2008convergent, sutton2009fast}. These methods attempt to maintain an expectation (over states) of the TD update, which allows to directly optimize the Bellman objective. While the exact relationship between GTD and ``momentum TD'' is not known, they both attempt to maintain an ``expected update'' and adjust parameters according to it; the first approximates the one-step linear TD solution, while the latter approximates the one-step batch TD update. Note that linear GTD methods can also be accelerated with momentum-style updates \citep{meyer2014accelerated}, low-rank approximations for part of the Hessian \citep{pan2016accelerated}, and adaptive learning rates \citep{gupta2019finite}. 
+
+
+More directly related to this work is that of \citet{sun2020adaptive}, who show convergence properties of a rescaled momentum for linear TD(0). While most (if not every) deep reinforcement learning method implicitly uses some form of momentum and/or adaptive learning rate as part of the deep learning toolkit, \citet{sun2020adaptive} properly analyse the use of momentum in a (linear) TD context. \citet{gupta2020applicability} also analyses momentum in the context of a linear TD(0) and TD($\lambda$), with surprising negative results suggesting naively applying momentum may hurt stability and convergence in minimal MDPs.
+
+Another TD-aware adaptive method is that of \citet{romoff2020tdprop}, who derive per-parameter adaptive learning rates, reminiscent of RMSProp \citep{hinton2012neural}, by considering a (diagonal) Jacobi preconditioning that takes into account the bootstrap term in TD. 
+
+Finally, we note that, as far as we know, recent deep RL works all use some form of adaptive gradient method, Adam \citep{kingma2015adam} being an optimizer of choice, closely followed by RMSProp \citep{hinton2012neural}; notable examples of such works include those of \citet{mnih2013playing}, \citet{schulman2017proximal}, \citet{hessel2018rainbow}, and \citet{kapturowski2018recurrent}. We also note the work of \citet{sarigul2018performance}, comparing various SGD variants on the game of Othello, showing significant differences based on the choice of optimizer.
+
+\textbf{On Taylor approximations} $\;\;$ \citet{balduzzi2017neural} note that while theory suggests that Taylor expansions around parameters should not be useful because of the "non-convexity" of ReLU neural networks, there nonetheless exists local regions in parameter space where the Taylor expansion is consistent. Much earlier work by \citet{engelbrecht2000using} also suggests that Taylor expansions of small sigmoid neural networks are easier to optimize. 
+Using Taylor approximations around parameters to find how to prune neural networks also appears to be an effective approach with a long history \citep{lecun1990optimal,hassibi1993second,engelbrecht2001pruning,molchanov2016pruning}.
+
+
+\textbf{On policy-gradient methods and others} $\;\;$ While not discussed in this paper, another class of methods used to solve RL problems are PG methods. They consist in taking gradients of the objective wrt a directly parameterized policy (rather than inducing policies from value functions). We note in particular the work of \citet{baxter2001infinite}, who analyse the bias of momentum-like cumulated policy gradients (referred to as traces therein), showing that $\beta$ the momentum parameter should be chosen such that $1/(1-\beta)$ exceeds the mixing time of the MDP.
+
+Let us also note the method of \citet{vieillard2020momentum}, Momentum Value Iteration, which uses the concept of an exponential moving average objective for a decoupled (with its own parameters) action-value function from which the greedy policy being evaluated is induced. This moving average is therein referred to as \emph{momentum}; even though it is not properly speaking the optimizational acceleration of \citet{polyak1964some}, its form is similar.
+
+
+
+\section{ICML 2020}
+
+\subsection{Generalization in Deep RL}
+
+\begin{itemize}
+\item \citet{amit2020discount}, in TD reducing gamma is equivalent to adding a particular kind of regularizer, this is done by tweaking the TD update a bit, in particular penalizing V(s)^2 factored by some gamma-dependent scale
+\item \citet{jordan2020evaluating}  
+\item \citet{ghosh2020representations} 
+\item \citet{ghiassian2020gradient}
+\item \citet{sakryukin2020inferring}  
+\item \citet{dong2019expressivity}, example MDP+policy where the dynamics can be learned with 6 linear regions by a neural net while the Q function would take thousands of linear regions. Confirm these intuitions on Mujoco, MB can do better.
+\item \citet{lee2020context}, training a context with backward+forward predictions as a task and condition model-based or model-free on the context helps with generalization and task meta-parameters extrapolation. The context is learned independently it seems, perhaps this has value instead of doing end-to-end? 
+\item \citet{zheng2020can}, meta-learn intrinsic rewards from several agent lifetimes, test on simple environments to see what kind of rewards are learned depending on the structure of the environment. Knowledge captures some regularities of the MDPs, “what to do” instead of “how to do”
+\item \citet{ota2020can}
+\end{itemize}
+
+
+\subsection{DNN generalization}
+\begin{itemize}
+\item \url{https://icml.cc/virtual/2020/poster/6013} Double Trouble in Double Descent: Bias and Variance(s) in the Lazy Regime, in the lazy regime, as you increase capacity, weight init variance goes to 0, bias and sample variance is well behaved and remains constant after some threshold (the phase transition?).
+\item \url{https://icml.cc/virtual/2020/poster/5879}  Being Bayesian, Even Just a Bit, Fixes Overconfidence in ReLU Networks, cool trick, take a MAP trained network, re-fit last layer’s weights as a gaussian to “be a bit bayesian”, and you get good estimates away from the data. (one downside is they only seem to test this for ridiculous perturbations, not for OoD but real data like SHVN <-> CIFAR).
+\item \url{https://icml.cc/virtual/2020/poster/6065}  SDE-Net: Equipping Deep Neural Networks with Uncertainty Estimates, get epistemic uncertainty by training a part of the neural network to do brownian motion diffusion, low diffusion on training set, high diffusion on OoD. Also get aleatoric uncertainty with entropy/gaussian variance prediction
+\item \url{https://icml.cc/virtual/2020/poster/5889}  Optimizing Data Usage via Differentiable Rewards, that’s actually clever, active learning style where the “reward” (loss) of the teacher is the gradient alignment between the samples shown to the student and the samples of the (meta?)test set. That reward is the derivative of the performance on the test set of the student wrt the teacher’s choices, thus the title.
+\item \url{https://icml.cc/virtual/2020/poster/6211}  The Implicit Regularization of Stochastic Gradient Flow for Least Squares
+\item \url{https://icml.cc/virtual/2020/poster/6812}  Is Local SGD Better than Minibatch SGD?
+\item \url{https://icml.cc/virtual/2020/poster/6356}  Neural Kernels Without Tangents, explicit convolutional kernel with nice properties, works on CIFAR10, still a kernel, still quadratic.
+\item \url{https://icml.cc/virtual/2020/poster/6207}  Landscape Connectivity and Dropout Stability of SGD Solutions for Over-parameterized Neural Networks, “As neural networks grow wider the solutions obtained by SGD become increasingly more dropout stable and barriers between local optima disappear.”
+\item \url{https://icml.cc/virtual/2020/poster/6004}  Training Neural Networks for and by Interpolation
+\item \url{https://icml.cc/virtual/2020/poster/6488}  Weakly-Supervised Disentanglement Without Compromises,
+\item \url{https://icml.cc/virtual/2020/poster/6208}  Learning Representations that Support Extrapolation, so like Batch Norm, but instead it’s context norm, and it allows analogies by normalizing away irrelevant dimensions of the objects used in the analogy. This is fairly specific to the task and I don’t see how this is generalizable. One would say, hackish :3 but who knows.
+\item \url{https://icml.cc/virtual/2020/poster/5788}  Hybrid Stochastic-Deterministic Minibatch Proximal Gradient: Less-Than-Single-Pass Optimization with Nearly Optimal Generalization
+\item \url{https://icml.cc/virtual/2020/poster/6617}  Generalization via Derandomization (Dan Roy)
+\item \url{https://icml.cc/virtual/2020/poster/6246}  Improving generalization by controlling label-noise information in neural network weights
+\item \url{https://icml.cc/virtual/2020/poster/5960}  Unique Properties of Wide Minima in Deep Networks
+\item \url{https://icml.cc/virtual/2020/poster/6307}  On the Noisy Gradient Descent that Generalizes as SGD
+\item \url{https://icml.cc/virtual/2020/poster/6384}  Why bigger is not always better: on finite and infinite neural networks
+\item \url{https://icml.cc/virtual/2020/poster/6763}  The Implicit and Explicit Regularization Effects of Dropout, derive the effects of dropout as 2 regularization terms, these involve Hessians so more expensive but for two NLP tasks appears to improve generalization somewhat.
+\item \url{https://icml.cc/virtual/2020/poster/6678}  Empirical Study of the Benefits of Overparameterization in Learning Latent Variable Models
+\item \url{https://icml.cc/virtual/2020/poster/6710}  The Neural Tangent Kernel in High Dimensions: Triple Descent and a Multi-Scale Theory of Generalization
+\item \url{https://icml.cc/virtual/2020/poster/6699}  Linear Mode Connectivity and the Lottery Ticket Hypothesis
+\item \url{https://icml.cc/virtual/2020/poster/6259}  Rethinking Bias-Variance Trade-off for Generalization of Neural Networks
+\item \url{https://icml.cc/virtual/2020/poster/5884}  Disentangling Trainability and Generalization in Deep Neural Networks
+\item \url{https://icml.cc/virtual/2020/poster/6144}  The Natural Lottery Ticket Winner: Reinforcement Learning with Ordinary Neural Circuits
+\item \url{https://icml.cc/virtual/2020/poster/6129}  Proving the Lottery Ticket Hypothesis: Pruning is All You Need, title, proof of the hypothesis, given some network you can approximate it with high probability with net of width poly(depth, width, #input, 1/eps, log(1/delta)) and depth 2*depth.
+\item \url{https://icml.cc/virtual/2020/poster/5808}  Rigging the Lottery: Making All Tickets Winners, start with random mask, train a bit, kill low weights, unmask new weights, repeat. Also, with lotteries there is no longer a piecewise linear (bezier) optimal path between minima, it’s almost flat but not quite, small bumps suggesting some sort of basin is found. RiGL the proposed method seems to solve that.
+\item \url{https://icml.cc/virtual/2020/poster/6230}  Momentum Improves Normalized SGD
+\end{itemize}
+  
+\subsection{Model-based RL}
+\begin{itemize}
+\item \citet{kim2020active} new 3d env with [static, random, periodic, animate] types of observations/other agents. Train a policy whose reward is the -Loss of the world model. To have a proxy reward, keep EMA of old model, difference of predictive performance. Cool results. 
+\item \citet{abbas2020selective}, heteroskedastic regression, learning the “error”/variance, this alone doesn’t help but then planning and weighing simulated transitions inversely by that error helps.
+\item \citet{nair2020goal}, models underfit on complex, diverse scenes. Train world model such that they are more accurate on the best trajectories by conditioning the model on the goal. Generalizes to unseen goals. 
+\item \citet{rajeswaran2020game}, think of learning model using policy data + learning opt policy using model as a two-player game, it’s equilibrium solves the MDP. One of the players has to learn slower than the other for it to be stable. Just doing that properly gives order of magnitude gains over sota on continuous control tasks. 
+\item \citet{tirinzoni2020sequential}, strategy: spend some time acting to identify the current task, train from a sequence of tasks rather than iid tasks and use their temporal correlations. Model P and R with theta’, and then try to select (s,a) that maximizes mutual information between (theta; theta’) (requires a generative model of P,R). They apply spectral methods to learn the hidden markov model of task transitions.
+\item \citet{lin2020improving}, clever decomposition of objects, attributes, + environment. Interaction is a GNN, “situation awareness” is done with attention on the environment encoding. Their setup allows the distribution of object attributes to be multimodal and generates good distributions of futures.
+\item \citet{ayoub2020model}, rigorous analysis of models that predict V(s_t+1) instead of s_t+1, like MuZero does, also proposes a new tabular algorithm that does things properly
+\item \citet{lai2020bidirectional}, learn forward and backward model, also learn a backward policy (either via max likelihood, or via a GAN?). To learn instead of uniform sampling from buffer for s0 they sample propto exp(beta V), the rollout forward and backward and do a PG step. In environment interactions they do N rollouts of H steps and take argmax for a0. There’s some theory and good looking bounds. Experiments on Mujoco.
+\item \citet{sekar2020planning} Plan to explore by rolling out trajectories and predict intrinsic reward, is compatible with any IntR method. They learn ensembles of models to use disagreement of intrinsic reward prediction as where to go. Learns from images of mujoco agents. Presumably can achieve zero-shot if relabeling the buffer with new reward doesn’t require interaction.
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{NeurIPS 2020}
+
+\subsection{Deep RL}
+\begin{itemize}
+\item \citet{kumar2020discor}, ``reweighting samples based on the estimated accuracy of their target values'' prevents bootstrapping from propagating lots of errors. Robotic control, Atari.
+\item \citet{fujimoto2020equivalence}, Prioritized Experience Replay is equivalent to a uniform replay sampler with a modified loss. This insight allows to design a better PER.
+\item \citet{kamalaruban2020robust}, adversarial training is like a two-player game. I guess the adversarial part comes from some minmax formulation, kind of like an agent trying to outdo itself. Not sure I understand really.
+\item \citet{van2020mdp}, identify the symmetries of an MDP to learn with less data (it's not clear if the symmetries have to be given or not though).
+\item \citet{bertran2020instance}, CoinRun, train instance(task)-agnostic policies by training ensembles with no overlap on tasks (I think? there seems to be more to it).
+\item \citet{kumar2020one}, MaxEnt, ``learning diverse behaviors for accomplishing a task can directly lead to behavior that generalizes to varying environments, without needing to perform explicit perturbations during training''
+\item \citet{lorberbom2020direct}, directed policy gradient, combine A* with direct optimization, prune nodes to get better gradients by knowing the return upper bound. (relevant to mol project?)
+\item -- Day 2 --
+\item \citet{kumar2020conservative}, learn a pessimistic/conservative $Q$ function by penalizing big Q values ($\argmax_\mu Q(s,a); a \sim \mu$).
+\item \citet{wang2020improving}, input mixup, but from inputs of different tasks. Mixup target and losses as well (V target, pi mixture).
+\item \citet{laskin2020reinforcement}, 2 more input augmentations for RL, translate and window (crop).
+\item \citet{yau2020did}, by learning a linear expectation model (on the top layer?) and a reward model, you can check what the model expected to happen.
+  \item -- Day 3 --
+  \item \citet{mirzadeh2020understanding}, [continual learning], analysis of how inner-loop hyperparameters affect forgetting.
+  \item \citet{klissarov2020reward}, use graph convnet to propage rewards for potential-function-based reward shaping.
+  \item \citet{oh2020discovering}, meta-learn the update rule by forcing agents to output $\pi,y$, both softmaxes, and pushing the learned update rule to perform well on a distribution of environments. Training the update rule on simple environments generalizes (0-shot?) to Atari (although sub-sota).
+  \item \citet{xu2020meta}, similar to the above, but meta-learn a value target.
+  \item \citet{vieillard2020munchausen}, augment reward with $\alpha \log \pi(a|s)$, makes DQN very good. It implicitly does MaxEnt!
+  \item \citet{lee2020predictive}, predict repr that maximises mutual information between future and past, accelerates SAC. Contrastive version of Conditional Entropy Bottleneck.
+\end{itemize}
+
+\subsection{RL Theory/Linear-land}
+\begin{itemize}
+\item \citet{lazic2020maximum}, off-policy evaluation in average reward linear transition setting, ``finding the maximum-entropy distribution subject to matching feature expectations under empirical dynamics'', which matches maxent in supervised learning.
+\item \citet{tripuraneni2020theory}, some new proposed notion of task diversity for tasks with a shared (learned?) representation.
+\item \citet{ghosh2020operator}, proposes to view PG methods through the operator framework as a combined two operators (improve, project). This allows us to look at those operators and improve them indivudually or consider their interaction. Link with Bellman operator makes sense. Discussion of PPO and friends.
+\item \citet{shah2020sample}, when the true Q-function is low-rank, one can learn a low-rank Q much faster. lol, same but for DNNs instead of just linear: \citet{agarwal2020flambe}.
+\item \citet{mei2020escaping}, alternative to softmax, escort
+  $$f(s) = \frac{|s_i|^p}{\sum_j |s_j|^p}; \;\; p\geq 1$$
+  works for RL as well to parameterize policies, avoids saturation pitfalls of softmax, and particular pitfalls of PG in RL (entropy reg?).
+\item \citet{wai2020provably}, provably efficient Neural GTD for off-policy learning, with some kind of momentum shenanigan!
+\item \citet{wen2020efficiency}, MDPs that have repeated substructures can be leveraged by hierarchical RL.
+\item -- Day 2 --
+\item \citet{wang2020long}, Is Long Horizon RL More Difficult Than Short Horizon RL?. No, for tabular episodic learning, difficulty scales log(horizon) rather than the previously conjectured poly(horizon).
+  
+\end{itemize}
+
+\subsection{Model-based RL}
+
+\begin{itemize}
+  \item \citet{tao2020novelty}, Model-based search from instrinsic reward based on distance in encoding space (DNN) with previously seen states. +Information Bottleneck objective.
+  \item \citet{li2020breaking}, theory, with a perturbed model-based planner can reach theoretical lower-bound of the sample size requirement.
+  \item \citet{kidambi2020morel}, MOReL, offline batch RL, learn pessimistic MDP from data (value of any policy is a lower bound of true value) and plan/learn policy with it. The MDP transfers to an absorbing low reward state when uncertainy is too high. Mujoco.
+  \item \citet{grimm2020value}, ``two models are value equivalent with respect to a set of functions and policies if they yield the same Bellman updates'', we can use this to find good models rather than e.g. likelihood. This is the principle underlying Predictron, VIN, VPN, TreeQN, MuZero.
+  \item \citet{van2020loca}, LoCA Regret, measure robustness of models to local changes in environments. Authors argue this is how we should evaluate model-based RL (or identify that an RL agent has a model).
+  \item \citet{shen2020model}, learn to minimize distributional mismatch been real and generated data in the encoding space, makes better model-based planning agents.
+  \item \citet{curi2020efficient}, if we learn epistemic and aleatoric uncertainty, instead of planning wrt both uncertainties in expectation, greedy plan and ``hallucinate control directly on the epistemic uncertainty''. I think?
+  \item \citet{chelu2020forethought}, forward vs backward models,``if the future is broad and predictable, forethought is invaluable, if backward hypotheses are causal and less determined by chance, hindsight planning is effective, states we pick to plan from matter''.
+  \item -- Day 2 --
+  \item \citet{lin2020model}, meta-RL, learn a model conditioned on the task, find an adversarial task and condition the learning subprocess to be robust to it through planning.
+  \item -- Day 3 --
+  \item \citet{charlesworth2020plangan}, learn goal-conditioned GAN to generate multiple trajectories ($s$ and $a$) and use these trajectories to train in hindsight. (robotics, 4rooms)
+    \item \citet{ermolov2020latent}, learn time-contractive representations, learn forward model, add model error as an intrinsic reward, get good exploration (Montezuma's revenge)
+\end{itemize}
+
+
+\subsection{Goal-based/hindsight}
+
+\begin{itemize}
+\item \citet{li2020generalized}, generalize HER to tasks (non-sparse reward functions rather than goal space=state space). Task relabeling is also changed, relabel trajectories by picking reward fcts which are likely to have generated them (drawing from inverse RL).
+\item \citet{eysenbach2020rewriting}, relabel trajectories with inverse RL. So basically like the previous paper... coincidence? Berkeley is too big haha.
+\item \citet{guez2020value}, learn to predict $V$ from the future $\tau^+$ yielding an embedding $\phi^+$, then learn to predict $\phi^+$ from the past $\tau^-$ yielding $\hat\phi$, then use $\hat\phi$ to compute the value function as usual. ``Reasoning, in hindsight, about which aspects of the future observations could help past value prediction''
+  \item \citet{zhang2020automatic}, ``we introduce a goal proposal module that prioritizes goals that maximize the epistemic uncertainty of the Q-function of the policy''.
+\end{itemize}
+
+
+\subsection{Deep Learning}
+\begin{itemize}
+\item \citet{zhang2020numerosity}, DNNs don't naturally learn to count, unlike previously claimed (even if they are trained to count, mixed results).
+\item \citet{jordan2020exactly}, compute (exactly??) the Lipschitz constant of ReLU networks, shows it increases during training, and shows that different regularization schemes affect the growth rate.
+\item \citet{bartoldson2020generalization}, pruning can actually improve test acc. When pruning pre-finetuning reduces test accuracy more, that's usually when it increases it the most post-finetuning: ``less pruning stability leads to more model flatness''. Link between pruning and the generalization of overparameterized DNNs.
+\item \citet{doimo2020hierarchical}, cool viz paper showing that on Imagenet categories are learn hierarchically in time and embedding space. Also some comment on depth (lower layers learn common features, higher layers learn separable features).
+\item \citet{pensia2020optimal}, lottery ticket, ``any target network of width $d$ and depth $l$ can be approximated by pruning a random network that is a factor $O(log(dl))$ wider and twice as deep''. Solid improvement over $O(d^4l^2)$!
+\item \citet{bernstein2020distance}, a distance between neural networks (same arch) based on normalized Froebius norm product. Weird? Induces a learning method that is more stable than SGD/Adam.
+\item \citet{ye2020greedy}, log-time algorithm to find lottery ticket.
+\item \citet{maennel2020neural}, train DNN on random labels, then retrain on different data, it's faster! So DNN must have learned something. In fact learns principal components. Effect exists mainly for lower layers.
+\item -- Day 2 --
+\item \citet{neyshabur2020being} transfer learning, ``when training from pre-trained weights, the model stays in the same basin in the loss landscape and different instances of such model are similar in feature space and close in parameter space''
+\item \citet{yang2020closer}  ``achieving robustness and accuracy in practice may require using methods that impose local Lipschitzness and augmenting them with deep learning generalization techniques'', not sure what they mean by generalization techniques.
+\item \citet{wu2020adversarial}, train on adversarial weight perturbations (+ the usual adversarial inputs), improves generalisation and robustness.
+\item \citet{ghorbani2020neural}, when are DNNs not kernels? When the signal-to-noise ratio is high, DNNs can can capture high-frequency patterns which kernel methods cannot (e.g. complicated natural images?)
+\item \citet{adlam2020understanding}, double descent occurs because of two (interaction) terms within the bias-variance decomposition of the loss. It makes sense that adding label noise amplifies double-descent but it has other causes.
+\item \citet{nguyen2020momentumrnn}, momentum-RNN, adds cell that's like momentum into a GRU or LSTM-like recurrence. Forces some stability of information propagation and gradient.
+\item \citet{shah2020pitfalls}, ``[the Simplicity Bias] of SGD and variants can be extreme: neural networks can exclusively rely on the simplest feature and remain invariant to all predictive complex features.''
+\item \citet{paulus2020gradient}, generalization of Gumbel-softmax trick to more structures. Still needs a softened equivalent structure, so no RL.
+\item -- Day 3 --
+\item \citet{jeyakumar2020can}, a review of DNN explanation methods, for visual inputs, explanation by example seems the best (mechanical turk).
+\item \citet{lee2020neural}, can meta-learn the generalization gap, make it a function of model and data, and even use that function to regularize training for new models.
+\item \citet{lewkowycz2020training}, relationship between L2 and optimal early stop, large L2 is worse but converges faster, so start with big L2 then decay.
+\item \citet{grill2020bootstrap}, self-supervised learning without negative pairs by keeping an exponential moving averaged target network (like in DDQN!) and predicting its latent variables when show the same image but transformed.
+\item \citet{mu2020compositional}, interpret the neurons of a DNN as interpreting some kind of logical statement (A and (B or C)) about the input. This yields an interesting compositional interpretation mechanism.
+\item \citet{ash2020warm}, when getting new data, instead of retraining from scratch, can train from previous converged parameters, but this generalizes poorly. Proposal: shrink and perturb when getting new data. (could this be used for DQN-style methods?)
+\item \citet{zhou2020towards}, why does Adam generalize worse than SGD? Adam flattens basins, destroys the anisotropic nature of gradients, making the escape time from said basins longer. This may be especially true of sharp basins/minima, associated with overfitting.
+\item \citet{pruthi2020estimating} another method of per-example influence on model (uses interference I think?)
+\item \citet{fort2020deep}, if you linearize a model for training early, it doesn't learn very well, but if you wait a bit more, the later models linearize very well (NTK). They end up in the same/similar basins.
+\end{itemize}
+
+\subsection{Learning Theory}
+\begin{itemize}
+\item \citet{barcelo2020model}, propose to consider the computational complexity of interpreting a given model as its ``interpretability''. Find that linear $\approx$ tree-based, that shallow $<$ deep neural nets, which is somewhat consistent with prior notions of interpretability.
+\item \citet{dziugaite2020search}, generalization theories should be judged by worst-case performance over a set of environments. Propose distributional framework that is robust to hyperparameter \emph{change}. No known measure is robust. Average case performance can be misleading.
+\item \citet{razin2020implicit} ``rather than perceiving the implicit regularization [of SGD] via norms, a potentially more useful interpretation is minimization of rank''
+\end{itemize}
+
+\subsection{AI Alignment}
+\begin{itemize}
+\item \citet{zhuang2020consequences}, if the agent doesn't have the full information about the reward/utility, it can learn solutions of arbitrary low utility. ``we should view the design of reward functions as an interactive and dynamic process and identifies a theoretical scenario where some degree of interactivity is desirable.''
+\item \citet{turner2020avoiding}, ``Attainable Utility Preservation (AUP) avoided side effects by penalizing shifts in the ability to achieve randomly generated goals'', cool env as well.
+  \item \citet{du2020ave}, human-machine interaction can be aided by maximizing the human user's empowerment. This acts as a reward which is easier/less ambiguous than a possibly ill-defined goal.
+\end{itemize}
+
+\subsection{Datasets}
+\begin{itemize}
+\item \citet{lacoste2020synbols}, synbols, synthetic dataset to understand what DNNs are robust to.
+\item RL Unplugged, DM set of offline data to benchmark RL
+  \item \citet{kuttler2020nethack}, NetHack \verbatim{¯\_(ツ)_/¯}
+  \end{itemize}
+
+\subsection{Workshops}
+
+\begin{itemize}
+\item \url{https://slideslive.com/38941301/domain-adversarial-reinforcement-learning}
+\item \url{https://slideslive.com/38941275/learning-to-reach-goals-via-iterated-supervised-learning}
+\item \url{https://slideslive.com/38941375/distributionconditioned-reinforcement-learning}
+\item \url{https://slideslive.com/38938066/bioconstrained-intelligence-and-the-great-filter} :)
+\item \url{https://offline-rl-neurips.github.io/program/offrl_41.html}, overestimation error fixes
+\end{itemize}
+
+
+\section{ICLR 2021}
+
+\subsection{RL}
+
+\begin{itemize}
+\item \citet{li2021solving}, hierarchical solving by reducing a goal to two solvable subgoals + self-imitation learning of accomplished goals. Still seems to require a fair amount of domain knowledge.
+\item \citet{chen2021randomized}, ensemble of Qs, pick the min over a random subset of the ensemble for your target at every update. Work better when the update to env step ratio is high.
+\item \citet{dabney2021temporallyextended}, $\epsilon$-greedy search but repeat the same action for a random number of steps.
+\item \citet{zhang2021learning}, bisimulation distance based representation loss, states with similar future reward structure get mapped to nearby points.
+  \item \citet{liu2021returnbased}, similar idea, contrastive learning where positive pairs are episodes with similar returns.
+\item \citet{igl2021transient}, ITER, distill policy from scratch once in a while, better generalisation.
+  
+\item \textbf{Exploration}
+\item \citet{zha2021rank}, rank exploratory episodes according to some cover score, imitate the best.
+\end{itemize}
+
+\subsection{DL}
+
+\begin{itemize}
+\item \citet{dittadi2021on}, large scale disentanglement study, pretrained $\beta$-VAEs on a set of colors used to train an RL agent, the agent only sees some of the colors. OOD colors for the agent, the agent still performs well. OOD colors for the VAE, agent doesn't perform as well.
+\item \citet{saha2021gradient}, clever way to do per-layer ortho grads for continual learning, prevent interference.
+\item \citet{smith2021on}, SGD has an implicit regularization that penalizes large gradients proportionally to the learning rate. This could explain why large LRs/small batch generalize better.
+  \item \citet{dery2021auxiliary}, smarter decomposition of orthograd-style idea.
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

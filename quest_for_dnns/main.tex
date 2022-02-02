@@ -1,0 +1,126 @@
+\title{Mental pictures of DNNs}
+\bibliography{main.bib}
+\includejs{dnns.js}
+
+I've been dealing with Deep Neural Networks (DNNs) for what seems like forever. Over the years, the mental image I have of them has changed dramatically, and keeps changing with every passing year as new results are found. Yet, I wish these mental images were cleaner. More precise.
+
+I've found in my life that one of the best ways for me to learn, truly learn, about something is to force myself to explain it to someone else. This is what I attempt here.
+
+There has been a wealth of results regarding DNNs, especially recently, and as much as I wish I understood them all, or even was aware of them all, I do not and I am not. I will try my best to cite when appropriate, but since I do not have a great memory, I may rely on intuition without having a precise source to back it up. Comments and emails welcome!
+
+(This may not be best viewed on a mobile device. I am not skilled enough to make it so, but feedback is welcome)
+
+\tableofcontents
+\donumbersections
+
+\section{Defining DNNs}
+
+\x{There exists a number of types of DNNs; the MLP, RNN, ConvNet, GraphNN, Transformer, and more. Each of these types come in a number of forms as well. I will not focus on this for now, but do note that I will refer to the choice of type of DNN as an \emph{inductive bias}.}
+
+I assume that you, the reader, are already somewhat familiar with neural networks. If this is not the case, there's plenty of great material online! Here I define the terms I later use for consistency. 
+
+Perhaps the most generic type of neural network is the MLP, usually defined as a series of linear projections followed by some non-linearity $a$, here for 3 \emph{layers}:
+$$f_\theta(x) = a(a(a(xW_1 + b_1)W_2 + b_2)W_3 + b_3)$$
+Here the $W$s and $b$s are adjustable parameters, summarized as $\theta = \{W_1,...\}$, that are \emph{trained} in some fashion to achieve some objective. The most common such training method is to define a differentiable loss function and to compute gradients of that loss w.r.t. the parameters to perform gradient descent.
+
+In what follows I will refer to intermediate values as $h(x)$, or as hidden layers.
+
+\subsection{The Neurons view}
+
+This is the classic \emph{connectionist} view. In this view, neurons are connected to each other with varying weights (the above $W$s), with information progressing forward (from input to output). Each node in the following graph corresponds to a neuron, inputs being their own neurons.
+\canvas{connectionistDNN}{300}{200}{center}
+It is common to view each neuron as learning some feature, either some presence or scale, and that each feature can then be used to predict the output better. Another mental model commonly attached to this view is that as one moves away from the input, neurons represent more \emph{abstract} concepts.
+
+How accurate is this mental model? I think it is fairly innacurate. First, it pushes us to imagine that neurons learn individually useful concepts, but this turns out to not really be the case, and makes interpreting neural networks quite hard. Then, it also isn't very informative. What can we deduce from it? Perhaps the mechanics of forward and backward propagation of information, where changing one weight affects the predictions of all following neurons, and that to adjust its output, one neuron may ``request'' of all its ancestors certain degrees of changes, initiating cascading effects.
+
+\subsection{The Distributed Representations view}
+
+An upgrade to the neurons view is to think about concepts not as encoded through individual neurons, but rather as a basis in hidden space.
+
+What do I mean by that? Let's look at the following cartoon. Imagine we have trained a neural network to detect cats. The network has many neurons, so let's just pick 3 and call them $h_1,h_2,h_3$. The distributed representations view says that it would be reasonable to find 3 neurons such that (a) no single neuron encodes a given property (b) taken together, there's in some sense a basis in which some properties can be recovered.
+
+I've illustrated this here by showing a basis of 3 properties, fur fluffiness, cat length, and eye color. This basis isn't aligned with the hidden neurons' explicit basis, $(h_1,h_2,h_3)$, but with a linear projection we could recover the properties. Such clean projections would be called \emph{disentangled}.
+
+\canvas{plane_distributed_repr}{250}{200}{center}
+
+Another insight of the distributed representation idea concerns generalization. Imagine that this space is learned correctly from a limited number of examples. Perhaps these examples contain very long cats with red eyes, and very short cats with black eyes, but no short fluffy cats with red eyes. Nonetheless, this basis allows the network to represent this last cat, even though it has never \emph{seen} one.
+
+This analogy was, for me, the first way I understood and pictured generalization in neural networks.
+
+Note that something very powerful is suggested here. If a dataset contains $n$ binary properties, by seeing each property once True, once False, a neural network could have enough information to extrapolate to any new combination of properties. In other words, by seeing $2n$ examples, a neural network could generalize to $2^n$ ``things''.
+
+Whether this phenomenon really happens in practice is debatable. One thing is sure, learning disentangled representations is quite hard, meaning that this phenomenon may not occur naturally, as-is, in DNNs. So perhaps this view is not the most useful (showing that representations are disentangled may be impossible \citep{locatello2018challenging})
+
+\subsection{The Linear Region view}
+
+I was introduced to this view by \citet{montufar2014number}, although recent papers have recently come out that add a lot of detail and nuance to it, notably two papers of Hanin and Rolnick \citep{hanin2019complexity,hanin2019deep}.
+
+This view requires us to think of each neuron as partitioning the input space, $\mathcal{X}$, in two parts: one where the neuron is ``positive'', one where it is ``negative''. If an MLP has a single neuron, then it defines a line (or a plane) where that neuron is 0, and either side is a different region.
+
+Let's visualize this for $x$ in 2d, within $[0,1]^2$. On the left there is a single neuron, defining two linear regions, on the right I've drawn multiple (3) neurons attached to the inputs.
+\canvas{plane_1neuron}{300}{100}{center}
+
+Note that we can see there are 3 neurons on the right, 3 lines split $\mathcal{X}$ into regions, but within $[0,1]^2$ there are only 5 regions. This is simply due to the arrangement of the weights and biases. The core result of \citet{montufar2014number} is that it is \emph{possible} to arrange the neurons in such a way as to have an \textbf{exponential} number of these linear regions, exponential in the \textbf{depth} of the network.
+
+Interestingly, \citet{hanin2019deep} find that this does not happen in practice (and there are very good reasons for it). Trained DNNs tend to have a number of linear regions that is \textbf{linear} in the total number of neurons, rather than exponential.
+
+\subsection{The Linear Region view and depth}
+
+In the previous drawing I've shown neurons directly attached to the input. These neurons defined linear transformations of the inputs, $x_1, x_2$, thus the unbroken line segments. What happens when we add depth, i.e. neurons attached to other neurons?
+
+Deeper neurons still compute linear transformations, but of the geometry defined by the neurons to which they are attached. In the original input space, this allows for non-linear transformations of almost arbitrary shape. When activation functions are piecewise linear (e.g. ReLUs), this means that we're still splitting the input space in linear (and convex) polygons/polytopes, but their arrangement is now more complex.
+
+Here I illustrate this by drawing the linear regions defined by a small network of depth 4 and width 4, and changing the value of one of the weights (right) $W_{ij}$ and one of the biases (left) $b_j$ of the last layer.
+
+\canvas{plane_move_top_anim}{300}{100}{center}
+
+Notice that moving these weights in the upper layers can have non-local effects. At the end of the left animation, we move the bias so much that it ends up changing the boundary both in the bottom left and bottom right regions.
+
+This happens because with depth the network ``folds'' the geometry in some sense, so points that are far apart in the input space may end up close together in the hidden space.
+
+\subsection{Overparameterization}
+
+That's one word you'll often hear in discussions around DNNs. At a high-level, a model is overparameterized if the number of parameters it has, $n$, is larger than the number of examples it sees, $N$. It is often the case in Deep Learning that $n \gg N$.
+
+Common wisdom in Machine Learning says that, to generalize, a system should have much less parameters than it sees examples, $n \ll N$. The intuition is that if a system captures the structural regularities of a dataset, then it needs to retain much less information than what is in the dataset.
+
+Contrary to this wisdom, deep models with $n \gg N$ are often found to actually generalize very well. Sometimes they do so \emph{better} the larger $n$ is! This phenomenon is known as double descent \citep{belkin2018reconciling}.
+
+Without going deeply into this phenomenon, I think it's useful to think of overparameterization as a kind of \textbf{smoothing} in \emph{function space}.
+
+Here I'm animating a walk through random initializations of a 1 hidden layer NN ($\mathbb{R}\to\mathbb{R}$), with $n_h$ hidden units. Note how the more units there are the smoother the initial random function is.
+
+\canvas{overparam_smoothing}{400}{100}{center}
+
+The way I imagine it, this smoothing comes from the coupling of random initialization with overparameterization. The more random features some output depends on, the more ``refined'' each slice of the initial function will be. In terms of the previous section, the more neurons, the more linear regions within a volume.
+
+If the initialization is done properly, i.e. to preserve mean and variance of $f_\theta(x)$, the aggregate of these many features will tend to converge smoothly (think central limit theorem).
+
+Another metaphor, which I heard from Yann LeCun, is this: in the limit of infinite parameters, randomly initialized, you're bound to have some of the parameters contain the ``true hypothesis''; you're bound to have some of the hidden features, the intermediary neurons, be the ``optimal'' ones. Training the network then mostly makes these features come out, i.e. mostly preserves smoothness (both are not entirely true, more on training later).
+
+
+\subsection{High-dimensional inputs}
+
+In the last two sections I've offerred mental (and litteral) images of neural networks operating on 1d or 2d inputs. While these concepts carry over to higher dimensional inputs, they don't apply as readily and our limited 3d imagination might mislead us.
+
+There's no single good way to visualize high-dimensional inputs. Often used are the PCA and the t-SNE method, who map vectors into lower dimensions through notions of distance and alignment.
+
+If you're familiar with signal-processing, here's one analogy that I like, spectral bias \citep{rahaman2018spectral}, also known as frequency bias. DNNs have a structure which makes them capture low frequencies (in the $x$ spectrum of the true function $y(x)$) first.
+
+In imagining how DNNs operate on high-dimensional inputs, I find it useful to think of what the low-frequency features are and the high-frequency ones are. When I was discussing folds earlier, think of folds occuring first over these repeated low-frequency signals.
+
+\section{Training DNNs}
+
+Now that we've established some mental models of neural networks, the next step is to establish mental models of their \emph{change}. What happens when we train DNNs?
+
+I'll start discussing supervised learning, and then I'll briefly address some reinforcement learning methods.
+
+\subsection{Hills and Valleys}
+
+
+
+\subsection{Degrees of Freedom}
+
+\subsection{The Interference view, take 2}
+
+\subsection{Flat regions of solution space}
