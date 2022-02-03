@@ -337,3 +337,118 @@ function molAlpha(elem){
     }
     requestAnimationFrame(frame);
 }
+
+function flownetworkBigger(elem){
+    let cns = document.getElementById(elem);
+    let ctx = cns.getContext("2d");
+    let span = document.getElementById(elem+"_div");
+    span.style.position = 'relative';
+
+    let tex = texBox(span);
+    var t = 0;
+    let w = cns.width, h = cns.height;
+
+    let N = 60 * 8;
+    let nodes = [[0,0], // s0
+                 [4,0], // s1 s2
+                 [4,4],
+                 [8,0],  // s3
+                 [10,3], // s3 T
+                 [8,5],  // s5
+                 [10,8], // s5 T
+                 [12, 0], // s7
+                 [12, 5], // s8
+                 [14, 8], // s8 T
+                 [16, 0], // 10
+                 [16, 3], // 11
+                 [18, 6], // 11 T
+                 [20, 1.5], // 13
+                 [16, 6.5], // 14
+                 [20, 9]
+                ];
+
+    let terminatedNodes = [4,6,9,12];
+    let naturalEnds = [13, 15];
+    let edges = [[0,1],[0,2],[1,3],[2,3],[3,4],[2,5],[5,6],
+                 [3,7],[5,8],[8,9],[7,10],[7,11],[8,11],[11,12],
+                 [10,13],[11,13],[8,14],[14,15],
+                 //[4, 6], [4, 7],[4, 8], [5,9],[9,12], [5,10],[10,12],[5,11]
+                ];
+    let edgeflows = [1,2,1,1,1,2,0.33,0.33,0.33,1,1,0.05,0.05,0.5,1,1,1,1,1,1];
+    let edgeparticles = new Array(edges.length);
+    let outdegrees = new Array(nodes.length).fill(0);
+    for (i in edges){
+        outdegrees[edges[i][0]] += 1;
+        edgeparticles[i] = new Array(Math.floor(20 * edgeflows[i]));
+        for (j=0;j<edgeparticles[i].length;j++){
+            edgeparticles[i][j] = [Math.random(), Math.random()-0.5];
+        }
+    }
+    
+    let ppi = 15;
+    function node(p){
+        drawCircle(p[0]*ppi, p[1]*ppi, ppi, '#000', '#fff');
+    }
+    function source(p){
+        drawPoly(ctx, [[(p[0]-2/3)*ppi, (p[1]-1)*ppi],
+                       [(p[0]-2/3)*ppi, (p[1]+1)*ppi],
+                       [(p[0]+1)*ppi, p[1]*ppi]], '#fff', 1, [0,0]);
+    }
+    function sink(p){
+        _ctx.fillStyle = '#fff';
+        let q = 3/4;
+        ctx.fillRect((p[0]-q)*ppi, (p[1]-q)*ppi, ppi * 2*q, ppi*2*q);
+        ctx.strokeRect((p[0]-q)*ppi, (p[1]-q)*ppi, ppi * 2*q, ppi*2*q);
+    }
+    function edge(i, o, d){
+        let lw = 4;
+        _ctx.lineWidth = lw * 2;
+        let u = [o[0] * ppi, o[1] * ppi]
+        let v = [d[0] * ppi, d[1] * ppi]
+        drawArrow(u[0], u[1], v[0], v[1], 0,
+                  terminatedNodes.indexOf(edges[i][1]) == -1 ? '#aaa' : '#c88');
+        _ctx.lineWidth = 1;
+        let pts = edgeparticles[i];
+        _ctx.fillStyle = '#00f';
+        let da = [v[0]-u[0], v[1]-u[1]]
+        let norm = Math.sqrt(da[0]*da[0] + da[1]*da[1]);
+        let db = [da[1]/norm, da[0]/norm]; //rotated 90d
+        for (p in pts){
+            ctx.fillRect(pts[p][0] * da[0]+u[0]+pts[p][1] * db[0] * lw,
+                         pts[p][0] * da[1]+u[1]+pts[p][1] * db[1] * lw, 2, 2);
+            pts[p][0] = (pts[p][0] + 0.01) - Math.floor(pts[p][0] + 0.0);
+        }
+    }
+    let orig = [15, 25];
+    for (n=0;n<nodes.length;n++){
+        if (terminatedNodes.indexOf(n) < 0)
+            tex('s'+n, 's_{'+n+'}').moveTo(nodes[n][0]*ppi+orig[0], nodes[n][1]*ppi+orig[1]);
+        else{
+            tex('x'+n, 'x_{'+(n-1)+'}').moveTo(nodes[n][0]*ppi+orig[0], nodes[n][1]*ppi+orig[1]);
+            tex('top'+n, '\\top').moveTo(nodes[n][0]*ppi+orig[0]-5, nodes[n][1]*ppi+orig[1]-25);
+        }
+        if (naturalEnds.indexOf(n) >= 0){
+            tex('ne'+n, '\\equiv x_{'+n+'}').moveTo(nodes[n][0]*ppi+orig[0]+35, nodes[n][1]*ppi+orig[1]);
+        }
+    }
+    function frame(){
+        if (!isElementInViewport(cns)){
+            requestAnimationFrame(frame); return;}
+        ctx.clearRect(0, 0, w, h); 
+        t = (t + 1) % N;
+        _ctx = ctx;
+        ctx.save()
+        ctx.translate(orig[0], orig[1]);
+        for (e in edges){
+            edge(e, nodes[edges[e][0]], nodes[edges[e][1]])
+        }
+        for (n in nodes){
+            if (n == 0) source(nodes[n])
+            else if (outdegrees[n] > 0) node(nodes[n])
+            else sink(nodes[n])
+        }
+        ctx.restore()
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+}
