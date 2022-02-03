@@ -17,7 +17,8 @@ We propose to use \emph{Flow Networks} to model discrete $p(x) \propto R(x)$ fro
 
 A flow network is a directed graph with \emph{sources} and \emph{sinks}, and edges carrying some amount of flow between them through intermediate nodes -- think of pipes of water. For our purposes, we define a flow network with a single source, the root or $s_0$; the sinks of the network correspond to the terminal states. We'll assign to each sink $x$ an ``out-flow'' $R(x)$. 
 
-\centered{\canvas{flownetwork}{400}{200}}
+
+\centered{\canvas{flownetworkBigger}{450}{225}}
 
 Given the graph structure and the out-flow of the sinks, we wish to calculate a valid \emph{flow} between nodes, e.g. how much water each pipe is carrying. Generally there can be infinite solutions, but this is not a problem here -- any valid solution will do. For example above, there is almost no flow between $s_5$ and $s_{12}$ that goes through $s_{10}$, it all goes through $s_9$, but the reverse solution would also be a valid flow.
 
@@ -106,5 +107,3 @@ By doing this on the molecule setting we again find that we can generate better 
 For more figures, experiments and explanations, check out \href{the paper}{https://arxiv.org/abs/2106.04399}, or reach out to us!
 
 
-
-\centered{\canvas{flownetworkBigger}{500}{300}}

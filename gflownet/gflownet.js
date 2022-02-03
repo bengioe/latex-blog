@@ -93,13 +93,14 @@ function drawCircle(ox, oy, r, color, fill){
 
 function texBox(span){
     var texElems = {};
-    function tex(name, string, notex){
+    function tex(name, string, notex, color){
         if (texElems.hasOwnProperty(name))
             return texElems[name]
         let elem = document.createElement("span");
         elem.innerHTML = notex === undefined? katex.renderToString(string): string;
         elem.style.position = 'absolute';
         elem.style.transform = 'translate(-50%, -55%) scale(0.9, 0.9)';
+        elem.style.color = color;
         span.appendChild(elem);
         texElems[name] = {
             'moveTo': function(x,y){elem.style.top = y+'px';elem.style.left = x+'px'; return this;},
@@ -363,23 +364,30 @@ function flownetworkBigger(elem){
                  [16, 3], // 11
                  [18, 6], // 11 T
                  [20, 1.5], // 13
-                 [16, 6.5], // 14
-                 [20, 9]
+                 [22, 4.5], // 13 T
+                 [16, 6.5], // 15
+                 [20, 9], // 16
+                 [22, 12], // 16 T
                 ];
 
-    let terminatedNodes = [4,6,9,12];
-    let naturalEnds = [13, 15];
-    let edges = [[0,1],[0,2],[1,3],[2,3],[3,4],[2,5],[5,6],
-                 [3,7],[5,8],[8,9],[7,10],[7,11],[8,11],[11,12],
-                 [10,13],[11,13],[8,14],[14,15],
+    let terminatedNodes = [4,6,9,12,14,17];
+    //let naturalEnds = [13, 15];
+    let edges = [[0,1],[0,2],[1,3],[2,3],[3,4],
+                 [2,5],[5,6],[3,7],[5,8],[8,9],
+                 [7,10],[7,11],[8,11],[11,12],[10,13],
+                 [11,13],[13,14],[8,15],[15,16],[16,17],
                  //[4, 6], [4, 7],[4, 8], [5,9],[9,12], [5,10],[10,12],[5,11]
                 ];
-    let edgeflows = [1,2,1,1,1,2,0.33,0.33,0.33,1,1,0.05,0.05,0.5,1,1,1,1,1,1];
+    let edgeflows = [2,3,2,1,1.5,
+                     2,0.5,1.5,1.5,1,
+                     1,0.5,0.2,0.3,1,
+                     0.4,1.4,0.3,0.3,0.3,
+                    ];
     let edgeparticles = new Array(edges.length);
     let outdegrees = new Array(nodes.length).fill(0);
     for (i in edges){
         outdegrees[edges[i][0]] += 1;
-        edgeparticles[i] = new Array(Math.floor(20 * edgeflows[i]));
+        edgeparticles[i] = new Array(Math.floor(50 * edgeflows[i]));
         for (j=0;j<edgeparticles[i].length;j++){
             edgeparticles[i][j] = [Math.random(), Math.random()-0.5];
         }
@@ -409,13 +417,13 @@ function flownetworkBigger(elem){
                   terminatedNodes.indexOf(edges[i][1]) == -1 ? '#aaa' : '#c88');
         _ctx.lineWidth = 1;
         let pts = edgeparticles[i];
-        _ctx.fillStyle = '#00f';
+        _ctx.fillStyle = '#00f5';
         let da = [v[0]-u[0], v[1]-u[1]]
         let norm = Math.sqrt(da[0]*da[0] + da[1]*da[1]);
-        let db = [da[1]/norm, da[0]/norm]; //rotated 90d
-        for (p in pts){
-            ctx.fillRect(pts[p][0] * da[0]+u[0]+pts[p][1] * db[0] * lw,
-                         pts[p][0] * da[1]+u[1]+pts[p][1] * db[1] * lw, 2, 2);
+        let db = [-da[1]/norm, da[0]/norm]; //rotated 90d
+        for (p=0;p<pts.length;p++){
+            ctx.fillRect(pts[p][0] * da[0]+u[0]+pts[p][1] * db[0] * lw*1.5-1,
+                         pts[p][0] * da[1]+u[1]+pts[p][1] * db[1] * lw*1.5-1, 2, 2);
             pts[p][0] = (pts[p][0] + 0.01) - Math.floor(pts[p][0] + 0.0);
         }
     }
@@ -427,10 +435,18 @@ function flownetworkBigger(elem){
             tex('x'+n, 'x_{'+(n-1)+'}').moveTo(nodes[n][0]*ppi+orig[0], nodes[n][1]*ppi+orig[1]);
             tex('top'+n, '\\top').moveTo(nodes[n][0]*ppi+orig[0]-5, nodes[n][1]*ppi+orig[1]-25);
         }
-        if (naturalEnds.indexOf(n) >= 0){
+        /*if (naturalEnds.indexOf(n) >= 0){
             tex('ne'+n, '\\equiv x_{'+n+'}').moveTo(nodes[n][0]*ppi+orig[0]+35, nodes[n][1]*ppi+orig[1]);
-        }
+        }*/
     }
+    /*
+    for (i=0;i<edges.length;i++){
+        let e = edges[i];
+        tex('f'+e, edgeflows[i]+'', undefined, '#080'
+           ).moveTo((nodes[e[0]][0]+nodes[e[1]][0])/2*ppi+orig[0],
+                    (nodes[e[0]][1]+nodes[e[1]][1])/2*ppi+orig[1])
+        
+    }*/
     function frame(){
         if (!isElementInViewport(cns)){
             requestAnimationFrame(frame); return;}
