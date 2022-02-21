@@ -132,7 +132,7 @@ def proc(expr):
             subexpr = str(expr)[1:-1]
             display = False
         elif expr.begin == '$$':
-            subexpr = r'\begin{aligned}' + "".join(expr.contents) + r'\end{aligned}'
+            subexpr = r'\begin{aligned}' + expr.string + r'\end{aligned}'
         elif expr.name == 'aligned':
             subexpr = str(expr)
         elif expr.name == 'itemize':
@@ -150,35 +150,35 @@ def proc(expr):
                     '<script>cload("can0")</script>')
         elif expr.name == 'canvas':
             num_canvas[0] += 1
-            s = (f'<div class="scontainer" style="width:{expr.args[1].value}px">'
+            s = (f'<div class="scontainer" style="width:{expr.args[1].string}px">'
                  f'<div id="can{num_canvas[0]}_div">'
-                 f'<canvas id="can{num_canvas[0]}" width="{expr.args[1].value}px"'
-                 f' height="{expr.args[2].value}px"></canvas></div></div>'
-                 f'<script>{expr.args[0].value}("can{num_canvas[0]}")</script>')
+                 f'<canvas id="can{num_canvas[0]}" width="{expr.args[1].string}px"'
+                 f' height="{expr.args[2].string}px"></canvas></div></div>'
+                 f'<script>{expr.args[0].string}("can{num_canvas[0]}")</script>')
             if len(expr.args) == 4:
-                xtra = expr.args[3].value.split(',')
+                xtra = expr.args[3].string.split(',')
                 if 'center' in xtra:
                     s = "<center>"+s+"</center>"
             return s
         elif expr.name == 'title':
-            title[0] = expr.args[0].value
+            title[0] = expr.args[0].string
         elif expr.name == 'href':
-            return f'<a href={expr.args[1].value}>{expr.args[0].value}</a>'
+            return f'<a href={expr.args[1].string}>{expr.args[0].string}</a>'
         elif expr.name == 'url':
-            return f'<a href={expr.args[0].value}>{expr.args[0].value}</a>'
+            return f'<a href={expr.args[0].string}>{expr.args[0].string}</a>'
         elif expr.name == 'cite' or expr.name == 'citep':
-            return bib2html(expr.args[0].value)
+            return bib2html(expr.args[0].string)
         elif expr.name == 'citet':
-            return bib2html(expr.args[0].value, inline=True)
+            return bib2html(expr.args[0].string, inline=True)
         elif expr.name == 'bibliography':
-            print(f"Loading bibdata from {expr.args[0].value}")
-            bibdata[0] = bib.load(open(expr.args[0].value, 'r'))
+            print(f"Loading bibdata from {expr.args[0].string}")
+            bibdata[0] = bib.load(open(expr.args[0].string, 'r'))
             checkbib()
             print(f"Done")
         elif expr.name == 'x':
             return ''
         elif expr.name == 'verbatim':
-            return expr.args[0].value
+            return expr.args[0].string
         elif expr.name == 'item':
             return TexPromise(parts=('<li>',proc_sub(expr), '</li>'))
         elif expr.name == 'section':
@@ -211,13 +211,13 @@ def proc(expr):
         elif expr.name == '&':
             return f'&amp;'
         elif expr.name == 'includejs':
-            script_hrefs.append(f'<script src="{expr.args[0].value}" type="text/javascript"></script>')
+            script_hrefs.append(f'<script src="{expr.args[0].string}" type="text/javascript"></script>')
         else:
             raise ValueError(expr.name)
     elif isinstance(expr, str):
         return expr
     elif isinstance(expr, data.OArg):
-        return expr.value
+        return expr.string
     else:
         raise ValueError(expr)
     return ""

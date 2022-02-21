@@ -20,7 +20,7 @@ A flow network is a directed graph with \emph{sources} and \emph{sinks}, and edg
 
 \centered{\canvas{flownetworkBigger}{450}{225}}
 
-Given the graph structure and the out-flow of the sinks, we wish to calculate a valid \emph{flow} between nodes, e.g. how much water each pipe is carrying. Generally there can be infinite solutions, but this is not a problem here -- any valid solution will do. For example above, there is almost no flow between $s_5$ and $s_{12}$ that goes through $s_{10}$, it all goes through $s_9$, but the reverse solution would also be a valid flow.
+Given the graph structure and the out-flow of the sinks, we wish to calculate a valid \emph{flow} between nodes, e.g. how much water each pipe is carrying. Generally there can be infinite solutions, but this is not a problem here -- any valid solution will do. For example above, there is almost no flow between $s_7$ and $s_{13}$ that goes through $s_{11}$, it all goes through $s_{10}$, but the reverse solution would also be a valid flow.
 
 Why is this useful? Such a construction corresponds to a generative model. If we follow the flow, we'll end up in a terminal state, a sink, with probability $p(x) \propto R(x)$. On top of that, we'll have the property that the in-flow of $s_0$--the flow of the unique source--is $\sum_x R(x)=Z$, the partition function. If we assign to each intermediate node a \emph{state} and to each edge an \emph{action}, we recover a useful MDP.
 
