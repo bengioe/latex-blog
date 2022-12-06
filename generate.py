@@ -26,6 +26,7 @@ def parseaccents(s):
             .replace('{\\l}', 'ł')
             .replace('{\\k{e}}', 'ę')
             .replace('{\\c{c}}', 'ç')
+            .replace('{\\aa}', 'å')
             )
 
 def parsebibauthors(s):
@@ -200,7 +201,7 @@ def proc(expr):
                                      t, '</h4>'))
         elif expr.name == 'textbf':
             return TexPromise(parts=('<b>',proc_sub(expr.args[0]), '</b>'))
-        elif expr.name == 'emph':
+        elif expr.name == 'emph' or expr.name == 'textit':
             return TexPromise(parts=('<i>',proc_sub(expr.args[0]), '</i>'))
         elif expr.name == 'centered':
             return TexPromise(parts=('<center>',proc_sub(expr.args[0]), '</center>'))
@@ -229,8 +230,10 @@ for i in soup.all:
     body.append(u)
 
 print("Rendering math...")
+print(__file__)
+src_dir = os.path.split(__file__)[0]
 rendered_tex = json.loads(
-    subprocess.check_output(f"node tex2html_many.js",
+    subprocess.check_output(f"node {src_dir}/tex2html_many.js",
                             input=json.dumps(tex_to_render).encode('utf8'),
                             shell=True).decode('utf8'))
 body = "".join([i() if isinstance(i, TexPromise) else i
@@ -260,6 +263,6 @@ out = f"""
   </body>
 </html>
 """
-
+print("Writing output to", sys.argv[1]+".html")
 with open(sys.argv[1]+".html", 'w') as f:
     f.write(out)

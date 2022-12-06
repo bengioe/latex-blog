@@ -116,7 +116,13 @@ without explicitly tackling generalization:
   \item \citet{wen2020efficiency}, in MDPs with a certain structure, namely equivalence classes of subgraphs/subMDPs, one can provably have more efficient hierarchical RL, options-based planning.
 \end{itemize}
     
+\subsection{Multi-objective RL}
+\begin{itemize}
+  \item \citet{yang2019generalized}, find the Pareto front by learning $Q(s,a,\omega)=\omega^T\mathbf{Q}(s,a)$, plus doing the greedy argmax backup by approximating the argmax over preferences with sampling. The loss target becomes something like $\mbox{max}_{a,\omega'}\omega^TQ(s',a,\omega')$, which intuitively I interpret as a kind of projection on the Pareto front (in preference space).
+\end{itemize}
 
+\section{Generative Flow Networks/GFlowNet/GFN}
+GFNs were introduced by \citet{bengio2021flow} and the framework quickly formalized further in \citet{bengio2021gflownet}.
 
 \section{Thoughts on Research}
 
@@ -145,6 +151,7 @@ The bus ticket theory of genius \cite{graham2019busticket} basically says that g
     \item \citet{lee2020neural}, proposes to (meta-)learn a complexity measure with neural networks. Since this measure is differentiable, it can be used as a regularization term in regular training. The description of a model $h$ is (roughly) its output on a set of training and test inputs (plus said inputs).
     \item \citet{swayamdipta2020dataset}, (NLP) it seems datasets can be consistently decomposed into easy, ambiguous, and hard examples. This is examplified by the variance of each example's true-class predictions across training. Training (more?) on ambiguous examples has an impact on out-of-distribution (OoD) performance.
     \item \citet{bordelon2020spectrum} ``as the size of the training set grows, kernel machines and neural networks fit successively higher spectral modes of the target function''
+    \item \citet{zhang2022on}, Train class conditional GAN -> generate fake data -> for an independent supervised model, test error on that data ~= test error on real test data
 \end{itemize}
 
 \subsection{Learning dynamics}
@@ -179,7 +186,7 @@ The bus ticket theory of genius \cite{graham2019busticket} basically says that g
 
 \subsection{The nature of deep nets}
 \begin{itemize}
-  \item \citet{hanin2019complexity} \& \citet{hanin2019deep}, the expected number of linear regions in deep nets is $O(N_h^d),\;N_h=n_{h,1}+n_{h,2}+..$,  suprising given the upper bound is at least $O(n_h^{N_l})$. Seems to remain roughly constant during training
+  \item \citet{hanin2019complexity} \& \citet{hanin2019deep}, the expected number of linear regions in deep nets is $O(N_h^d),\;N_h=n_{h,1}+n_{h,2}+..$,  suprising given the upper bound is at least $O(n_h^{N_l})$. Seems to remain roughly constant during training, although \citet{gamba2022all} suggest that counting regions is not the best thing to do; instead one should measure how ``nonlinear''/high-variance/slope-y the piecewise linear function induced by rectifiers is. \citet{gamba2022all} do so by measuring the area under the curve of $f(lerp(x, x', t)), t\in [0,1]$ compared to $lerp(f(x), f(x'), t)$.
 \end{itemize}
 
 \section{DNN architectures}
@@ -403,6 +410,11 @@ Let us also note the method of \citet{vieillard2020momentum}, Momentum Value Ite
   \item \citet{zhang2020automatic}, ``we introduce a goal proposal module that prioritizes goals that maximize the epistemic uncertainty of the Q-function of the policy''.
 \end{itemize}
 
+\subsection{Offline RL}
+\begin{itemize}
+\item \citet{kostrikov2022offline}, offline Q Learning with implicit stochastic correction.
+\end{itemize}
+
 
 \subsection{Deep Learning}
 \begin{itemize}
@@ -499,26 +511,10 @@ Let us also note the method of \citet{vieillard2020momentum}, Momentum Value Ite
 
 
 
+\section{Drug Discovery}
 
+\subsection{Multi-Objective}
+\citet{jin2020multi} subgraphs can have interesting properties too, but less of them (like one part of the graph binds to some protein and another part binds to another protein, so a molecule that has both parts will be dual binders). So, they’re a good vocabulary to learn options from!
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\subsection{Generation}
+\citet{ahn2021spanning} generate the tree (autoregressive task!) \textit{then} the residual edges. Can plug autoregressive transformer and all.
