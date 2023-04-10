@@ -1,0 +1,47 @@
+\bibliography{journ.bib}
+\bibliography{neurips2022.bib}
+
+\title{A stochastic review of NeurIPS 2022}
+
+Welcome to my hastily written overview of NeurIPS 2022. I made this public, but use it with discretion, some of the summaries may be from me glancing at the abstract for 17.4 seconds.
+
+\donumbersections
+\tableofcontents
+
+\section{Biology & Friends}
+
+\citet{hetzel2022predicting} introduce chemCPA, which learns representations of pheno/expression data in a disentangled way. Some gene expression $x$ is encoded into $z$, and is made adversarially to not contain any information about the perturbation (genetic or drug), which yields the basal state. Then the drug and cell line information are added back in via graph encoder + cell embedding, sent to be reconstructed by a decoder. This induces a model that can make predictions about, e.g. drugs not in the dataset.
+\section{Reinforcement Learning}
+
+Perhaps one of my favorite papers this year is \citet{schaul2022the}'s Policy Churn results, showing that the greedy policy in deep value-based methods changes significantly ($\sim$10\% of actions) \emph{after every gradient step}. This is true in DQN, DDQN, R2D2. It is a significant driver of exploration, is consistent across environments, stays high late in training, is not due to redundant actions, and gets worse with network depth.
+
+
+
+Some ``Unsupervised RL'' contributions; \citet{meier2022openended} suggest iteratively learning skills in some kind of contrastive way, where positive samples for a new skill's reward are states the agent can reach, negatives samples being those it can't reach. \citet{lu2022discovered} meta-learn an RL algorithm by evolving a drift-based method (seeded with PPO).
+
+In theory land, \citet{manek2022the} show that regularization+offpolicy+TD can have unexpected non-monotonic effects. \citet{arumugam2022deciding} show some interesting relationships between model compression and planning from a rate-distortion theory perspective.
+
+
+\section{Deep Learning}
+
+Maybe relevant to our too-large-datasets problems is \citet{zhou2022dataset}'s dataset distillation method based on meta-learning a small set of training inputs on which a model trains well (this is done through the last layer, the rest is frozen during meta-learning). There are at least two more distillation papers at NeurIPS, didn't check them out.
+
+\subsection{Deep Learning Theory}
+
+Interesting results from Andrew Saxe's group on linear DNNs; \citet{braun2022exact} show how classes of initialization exactly impact learning dynamics, with some interesting consequences for continual learning that cleanly depend on task similarity. \citet{vardi2022gradient} prove that gradient flows converge to non-robust (adversarially) ReLU networks, even if they are max-margin solutions there exists a universal perturbation that flips the label. \citet{oyen2022robustness} link the dependency of label noise to feature or class information with different tipping points (after which there is ``too much noise''); theory matches our intuition that correlated noise is worse than random noise.
+
+In generalization theory, \citet{lotfi2022pacbayes} show how a compression-based approach can make PAC-Bayes generalization bounds be much tighter; among other fun results they show that CNNs' superiority over MLPs (per parameter) can be explained by the fact that CNNs are more compressible, but only if the data makes sense as suffling pixels nullifies this.
+
+\subsection{Graph Neural Networks}
+
+\citet{aamand2022exponentially} derive a stochastic version of a WL-passing GNN with logarithmic numbers of bits.
+
+\citet{vincent-cuaz2022template} propose a new pooling layer based on (a) learned graph templates (b) features that are based on optimal-transport distance to those templates. Funky but I can't say I really understand it.
+
+\citet{zahirnia2022micro} propose objectives for graph VAEs that push models to capture both local (micro) and global (macro) properties of graphs.
+
+\citet{xie2022taskagnostic} propose a task-agnostic explanability framework for GNNs, although I find the potentially most interesting part of the paper is the contrastive objective they use (derived through mutual information). Might be good to look at just from an embedding learning perspective.
+
+\subsection{GFlowNet & friends}
+
+\citet{kong2022endtoend}'s energy based models look an awful lot like a worse version of GFlowNet applied to long term decision-making (i.e. RL). Could be good to look at.

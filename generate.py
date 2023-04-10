@@ -4,12 +4,16 @@ import subprocess
 import sys
 import json
 import os
+from typing import List, Dict
+
+input_file_root = os.path.split(sys.argv[1])[0]
 
 print("Parsing", sys.argv[1])
+print("  root:", input_file_root)
 
 soup = TexSoup(open(sys.argv[1], 'r').read())
 print("Generating...")
-bibdata = [None]
+bibdata: List[Dict] = []
 
 def parseaccents(s):
     return (s.replace('{\\\'o}', 'ó')
@@ -35,7 +39,7 @@ def parsebibauthors(s):
 
 def checkbib():
     entries = set()
-    for i in bibdata[0].entries:
+    for i in bibdata:
         eid = i['ID']
         if eid in entries:
             print('duplicate entry for', eid)
@@ -45,7 +49,7 @@ def bib2html(cid, inline=False):
     cids = [i.strip() for i in cid.split(',')]
     entries = []
     for cid in cids:
-        for i in bibdata[0].entries:
+        for i in bibdata:
             if i['ID'] in cid:
                 entries.append(i)
                 break
@@ -84,6 +88,8 @@ num_canvas = [0]
 title = [""]
 body = []
 script_hrefs = []
+extra_head = ''
+br_multiplier = 1
 
 tex_to_render = []
 class TexPromise:
@@ -120,6 +126,7 @@ def make_toc():
 
 def proc(expr):
     #print(expr)
+    #print(repr(str(expr)))
     #print(type(expr))
     def proc_sub(x, j=''):
         subs = [proc(i) for i in x.contents]
@@ -144,7 +151,23 @@ def proc(expr):
         tex_to_render.append((subexpr, display))
         return TexPromise(len(tex_to_render) - 1)
     elif isinstance(expr, data.TexText):
-        return str(expr).replace('\n\n','<br/>\n')
+        s = str(expr)
+        if s == '\\%':
+            return '%'
+        if s[0] == '%':
+            return ''
+        if s == '\n' and False:
+            # This is weird but if the input is
+            '''
+            test % test test
+            
+            qweqwe
+            '''
+            # then only the newline of the empty line gets passed, the newline at the end of "% test test\n"
+            # seems to dissapear to we don't get a double \n\n to replace below.
+            # But this inserts extraneous newlines everywhere
+            return '<br/>\n'
+        return str(expr).replace('\n\n','<br/>'*br_multiplier+'\n')
     elif isinstance(expr, data.TexCmd):
         if expr.name == 'canvas0':
             return ('<canvas id="can0" width="800px" height="600px"></canvas>' +
@@ -161,6 +184,11 @@ def proc(expr):
                 if 'center' in xtra:
                     s = "<center>"+s+"</center>"
             return s
+        elif expr.name == 'extrahead':
+            extra_head = expr.args[0].string
+        elif expr.name == 'set':
+            print('set', str(expr.args[0].string), eval(str(expr.args[1].string)))
+            globals()[str(expr.args[0].string)] = eval(str(expr.args[1].string))
         elif expr.name == 'title':
             title[0] = expr.args[0].string
         elif expr.name == 'href':
@@ -173,9 +201,10 @@ def proc(expr):
             return bib2html(expr.args[0].string, inline=True)
         elif expr.name == 'bibliography':
             print(f"Loading bibdata from {expr.args[0].string}")
-            bibdata[0] = bib.load(open(expr.args[0].string, 'r'))
+            global bibdata
+            bibdata = bibdata + bib.load(open(input_file_root + '/' + expr.args[0].string, 'r')).entries
             checkbib()
-            print(f"Done")
+            print("Done")
         elif expr.name == 'x':
             return ''
         elif expr.name == 'verbatim':
@@ -184,10 +213,11 @@ def proc(expr):
             return TexPromise(parts=('<li>',proc_sub(expr), '</li>'))
         elif expr.name == 'section':
             t = proc_sub(expr.args[0])
-            flags['counters']['section'] += 1
-            flags['counters']['subsection'] = 1
-            sc = ((str(flags['counters']['section']),)
-                  if flags['numbersections'] else [])
+            if flags['numbersections']:
+                flags['counters']['section'] += 1
+                flags['counters']['subsection'] = 1
+            sc = ([str(flags['counters']['section']),]
+                  if flags['numbersections'] else [''])
             sections.append(('section', t, *sc))
             return TexPromise(parts=(f'<a name="s{len(sections)}"></a><h3>', '.'.join(sc), ' ',
                                      t, '</h3>'))
@@ -230,7 +260,6 @@ for i in soup.all:
     body.append(u)
 
 print("Rendering math...")
-print(__file__)
 src_dir = os.path.split(__file__)[0]
 rendered_tex = json.loads(
     subprocess.check_output(f"node {src_dir}/tex2html_many.js",
@@ -253,10 +282,11 @@ out = f"""
     {os.linesep.join(script_hrefs)}
     <link rel="stylesheet" href="main.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {extra_head}
   </head>
   <body>
    <div class="content">
-   <center><a href="http://folinoid.com/">[Home]</a></center>
+   <center><a href="http://folinoid.com/">[Home]</a></center><br/><br/>
      {body}
    </div>
    <div style='height: 10em;'></div>

@@ -1,0 +1,34 @@
+\bibliography{journ.bib}
+\bibliography{gfn.bib}
+\extrahead{}
+\set{br_multiplier}{2}
+
+\title{An informal survey of Generative Flow Network literature}
+\centered{\section{An informal survey of Generative Flow Network literature}}
+
+\centered{Emmanuel Bengio}
+<br/>
+
+What follows is my attempt to force myself to keep track of GFlowNet (GFN) literature. (Un)fortunately, this may very well get out of hand as GFNs appear to gain in popularity. I hope this summary is helpful, and as always, check links and citations within the cited papers for more context. Happy hacking.
+
+\donumbersections
+\tableofcontents
+
+\section{The roots}
+
+Generative Flow Networks (GFNs) were introduced by \citet{bengio2021flow}. Their creation came from the desire to make reinforcement learning methods a bit more exploratory, by design, in a context of discrete optimization. Thanks a few extra assumptions on the Markov Decision Process and a different learning objective, a trained GFN model samples (i.i.d.) from some unnormalized distribution over objects.
+
+\subsection{So, what's a GFlowNet?}
+
+There are a number of introductory materials on GFNs, but I'll point out the thorough \href{tutorial written by Yoshua, Kolya Malkin, and Moksh Jain}{http://tinyurl.com/gflownet-tutorial}, as well as this \href{Colab tutorial}{https://colab.research.google.com/drive/1fUMwgu2OhYpQagpzU5mhe9_Esib3Q2VR#scrollTo=gA3nVc6hnjY3} I wrote to introduce GFNs through code.
+
+The intuitive idea behind a GFN is to estimate flows (of water, of particles) in a pointed directed acyclic \emph{network}. Perhaps confusingly, the \emph{Network} in GF\emph{N} refers to the state space, \emph{not} a neural network architecture. The network represents all possible ways of constructing an object, and so knowing the flow gives us a policy which we can follow to sequentially construct objects. What, we believe, makes the strength of GFNs is that at convergence, this policy yields samples in proportion to an energy function, i.e. $$p_\theta(x) \propto exp(f(x))$$
+
+Due to some accidents of history, and my own RL ancestry, we often refer in GFN papers to a reward function $R(x)>0$, and therefore to $p(x)\propto R(x)$, making $f(x) = \log R(x)$. In RL-speak, we're able to use the GFN framework to find a policy that maximizes the entropy of the terminal state distribution, in a terminal-reward episodic DAG-MDP, with an off-policy offline objective.
+
+While the content of our original paper \cite{bengio2021flow} was mostly correct, the work of \citet{bengio2021gflownet} solidifies the maths of the GFN framework into a coherent theory.
+
+\citet{bengio2021gflownet} reintroduce GFlowNets through the concept of trajectory flows in pointed DAGs, Markovian flows, the probability measures that they induce, and the properties that they have. There are lots more interesting properties derived there than I will list here. Among multiple other things, this work speculates on a series of ideas that GFNs are compatible with; GFNs can be conditioned easily, on events or intial states which can yield quantities such as the free energy or entropy of a state, or on a reward function or its description; GFNs can be used to generate sets, graphs, or to marginalize joint distributions; GFNs can also be used to induce a distribution over a (smoothed) Pareto front.
+
+\subsection{Training GFlowNets}
+
