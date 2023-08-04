@@ -26,9 +26,29 @@ The intuitive idea behind a GFN is to estimate flows (of water, of particles) in
 
 Due to some accidents of history, and my own RL ancestry, we often refer in GFN papers to a reward function $R(x)>0$, and therefore to $p(x)\propto R(x)$, making $f(x) = \log R(x)$. In RL-speak, we're able to use the GFN framework to find a policy that maximizes the entropy of the terminal state distribution, in a terminal-reward episodic DAG-MDP, with an off-policy offline objective.
 
+How does this happen? The GFN framework proposes to conserve the flow (the energy) attributed to each terminal state $x\in\mathcal{X}$ within each intermediate state $s\in\mathcal{S}$; more precisely we write:
+$$\sum_{s\in Par(s')} F(s\to s') = R(s) + \sum_{s''\in Chd(s')} F(s'\to s'')$$
+with $R(s)=0$ by convention when $s\in \mathcal{S}\setminus \mathcal{X}$, i.e. $s$ is not a terminal state but an intermediary one. When this condition is respected and sampling is done with a policy $\pi(s\to s')\propto F(s\to s')$ then we have the property $p(x)\propto R(x)$. 
+
 While the content of our original paper \cite{bengio2021flow} was mostly correct, the work of \citet{bengio2021gflownet} solidifies the maths of the GFN framework into a coherent theory.
 
 \citet{bengio2021gflownet} reintroduce GFlowNets through the concept of trajectory flows in pointed DAGs, Markovian flows, the probability measures that they induce, and the properties that they have. There are lots more interesting properties derived there than I will list here. Among multiple other things, this work speculates on a series of ideas that GFNs are compatible with; GFNs can be conditioned easily, on events or intial states which can yield quantities such as the free energy or entropy of a state, or on a reward function or its description; GFNs can be used to generate sets, graphs, or to marginalize joint distributions; GFNs can also be used to induce a distribution over a (smoothed) Pareto front.
 
-\subsection{Training GFlowNets}
+\subsection{Parameterizing & Training GFlowNets}
 
+\section{X-GFlowNets}
+
+\subsection{Multi-Objective GFNs}
+The main strategy for dealing with multi-objective optimization with the GFN framework has been scalarization; reduce the MOO problem to a (family of) single-dimensional problem(s). \citet{jain2023multi} explored (log-)linear scalarization (i.e. learn $p(x|\omega)\propto R(x|\omega) = \sum_i \omega_i R_i(x)$) for ``one-round'' MOO, as well as a ``scalarization'' of an active learning process through hypervolume improvement. \citet{zhu2023sample} use a similar linear scalarization approach, but do so through the use of hypernetworks.
+
+\subsection{Energy-Based GFNs}
+\citet{zhang2022generative} introduce EB-GFNs as a way to jointly learn $R(x;\phi)$ and $p_{GFN}(x;\theta)$ armed only with a dataset; the method consists mainly is training $R(x;\phi)$ via MLE using GFlowNet samples as negative samples and dataset samples as positive ones. \citet{ekbote2022consistent} extend this method to cases where a label is available, i.e. one learns $p(x, y)$ (which gives us easy access to $p(x|y)$).
+
+
+\section{Connections}
+The GFN framework has of course a number of connections to other frameworks.
+
+\citet{malkin2022gflownets} tie links between variation inference methods and the GFN framework, in particular showing how in certain cases their expected gradients are equivalent. \citet{zhang2022unifying} also tie links between past generative modelling methods and GFlowNets, showing how one can be framed as the other; hierarchical VAEs, diffusion models, autoregressive models, and GANs. \citet{deleu2023generative} describe how GFlowNets can be presented through the MCMC framework as recurrent Markov chains by treating $s_f$ as $s_0$ and inducing a loop.
+
+
+\section{Applications}
